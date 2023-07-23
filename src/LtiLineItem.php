@@ -2,145 +2,241 @@
 
 namespace BNSoftware\Lti1p3;
 
+use Throwable;
+
 class LtiLineItem
 {
-    private $id;
-    private $score_maximum;
-    private $label;
-    private $resource_id;
-    private $resource_link_id;
-    private $tag;
-    private $start_date_time;
-    private $end_date_time;
+    private ?string $id;
+    private ?float $scoreMaximum;
+    private ?string $label;
+    private ?string $resourceId;
+    private ?string $resourceLinkId;
+    private ?string $tag;
+    private ?LtiTimestamp $startDateTime;
+    private ?LtiTimestamp $endDateTime;
+    private ?bool $gradesReleased;
 
-    public function __construct(array $lineitem = null)
+    /**
+     * @param ?array $lineItem
+     * @throws Throwable
+     */
+    public function __construct(?array $lineItem = null)
     {
-        $this->id = $lineitem['id'] ?? null;
-        $this->score_maximum = $lineitem['scoreMaximum'] ?? null;
-        $this->label = $lineitem['label'] ?? null;
-        $this->resource_id = $lineitem['resourceId'] ?? null;
-        $this->resource_link_id = $lineitem['resourceLinkId'] ?? null;
-        $this->tag = $lineitem['tag'] ?? null;
-        $this->start_date_time = $lineitem['startDateTime'] ?? null;
-        $this->end_date_time = $lineitem['endDateTime'] ?? null;
-    }
-
-    public function __toString()
-    {
-        // Additionally, includes the call back to filter out only NULL values
-        return json_encode(array_filter([
-            'id' => $this->id,
-            'scoreMaximum' => $this->score_maximum,
-            'label' => $this->label,
-            'resourceId' => $this->resource_id,
-            'resourceLinkId' => $this->resource_link_id,
-            'tag' => $this->tag,
-            'startDateTime' => $this->start_date_time,
-            'endDateTime' => $this->end_date_time,
-        ], '\BNSoftware\Lti1p3\Helpers\Helpers::checkIfNullValue'));
+        $this->id = $lineItem['id'] ?? null;
+        $this->scoreMaximum = $lineItem['scoreMaximum'] ?? null;
+        $this->label = $lineItem['label'] ?? null;
+        $this->resourceId = $lineItem['resourceId'] ?? null;
+        $this->resourceLinkId = $lineItem['resourceLinkId'] ?? null;
+        $this->tag = $lineItem['tag'] ?? null;
+        $this->startDateTime = empty($lineItem['startDateTime'])
+            ? null
+            : LtiTimestamp::new($lineItem['startDateTime']);
+        $this->endDateTime = empty($lineItem['endDateTime'])
+            ? null
+            : LtiTimestamp::new($lineItem['endDateTime']);
+        $this->gradesReleased = $lineItem['gradesReleased'] ?? null;
     }
 
     /**
-     * Static function to allow for method chaining without having to assign to a variable first.
+     * @param ?array $lineItem
+     * @return LtiLineItem
+     * @throws Throwable
      */
-    public static function new()
+    public static function new(?array $lineItem = null)
     {
-        return new LtiLineItem();
+        return new LtiLineItem($lineItem);
     }
 
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function setId($value)
+    /**
+     * @param ?string $value
+     * @return $this
+     */
+    public function setId(?string $value): LtiLineItem
     {
         $this->id = $value;
 
         return $this;
     }
 
-    public function getLabel()
+    /**
+     * @return ?string
+     */
+    public function getId(): ?string
     {
-        return $this->label;
+        return $this->id;
     }
 
-    public function setLabel($value)
+    /**
+     * @param ?string $value
+     * @return $this
+     */
+    public function setLabel(?string $value): LtiLineItem
     {
         $this->label = $value;
 
         return $this;
     }
 
-    public function getScoreMaximum()
+    /**
+     * @return ?string
+     */
+    public function getLabel(): ?string
     {
-        return $this->score_maximum;
+        return $this->label;
     }
 
-    public function setScoreMaximum($value)
+    /**
+     * @param ?float $value
+     * @return $this
+     */
+    public function setScoreMaximum(?float $value): LtiLineItem
     {
-        $this->score_maximum = $value;
+        $this->scoreMaximum = $value;
 
         return $this;
     }
 
-    public function getResourceId()
+    /**
+     * @return ?float
+     */
+    public function getScoreMaximum(): ?float
     {
-        return $this->resource_id;
+        return $this->scoreMaximum;
     }
 
-    public function setResourceId($value)
+    /**
+     * @param ?string $value
+     * @return $this
+     */
+    public function setResourceId(?string $value): LtiLineItem
     {
-        $this->resource_id = $value;
+        $this->resourceId = $value;
 
         return $this;
     }
 
-    public function getResourceLinkId()
+    /**
+     * @return ?string
+     */
+    public function getResourceId(): ?string
     {
-        return $this->resource_link_id;
+        return $this->resourceId;
     }
 
-    public function setResourceLinkId($value)
+    /**
+     * @param ?string $value
+     * @return $this
+     */
+    public function setResourceLinkId(?string $value): LtiLineItem
     {
-        $this->resource_link_id = $value;
+        $this->resourceLinkId = $value;
 
         return $this;
     }
 
-    public function getTag()
+    /**
+     * @return ?string
+     */
+    public function getResourceLinkId(): ?string
     {
-        return $this->tag;
+        return $this->resourceLinkId;
     }
 
-    public function setTag($value)
+    /**
+     * @param ?string $value
+     * @return $this
+     */
+    public function setTag(?string $value): LtiLineItem
     {
         $this->tag = $value;
 
         return $this;
     }
 
-    public function getStartDateTime()
+    /**
+     * @return ?string
+     */
+    public function getTag(): ?string
     {
-        return $this->start_date_time;
+        return $this->tag;
     }
 
-    public function setStartDateTime($value)
+    /**
+     * @param ?LtiTimestamp $value
+     * @return $this
+     */
+    public function setStartDateTime(?LtiTimestamp $value): LtiLineItem
     {
-        $this->start_date_time = $value;
+        $this->startDateTime = $value;
 
         return $this;
     }
 
-    public function getEndDateTime()
+    /**
+     * @return ?LtiTimestamp
+     */
+    public function getStartDateTime(): ?LtiTimestamp
     {
-        return $this->end_date_time;
+        return $this->startDateTime;
     }
 
-    public function setEndDateTime($value)
+    /**
+     * @param ?LtiTimestamp $value
+     * @return $this
+     */
+    public function setEndDateTime(?LtiTimestamp $value): LtiLineItem
     {
-        $this->end_date_time = $value;
+        $this->endDateTime = $value;
 
         return $this;
+    }
+
+    /**
+     * @return ?LtiTimestamp
+     */
+    public function getEndDateTime(): ?LtiTimestamp
+    {
+        return $this->endDateTime;
+    }
+
+    /**
+     * @param ?bool $value
+     * @return $this
+     */
+    public function setGradesReleased(?bool $value): LtiLineItem
+    {
+        $this->gradesReleased = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return ?bool
+     */
+    public function getGradesReleased(): ?bool
+    {
+        return $this->gradesReleased;
+    }
+
+    public function toArray(): array
+    {
+        return array_filter(
+            [
+                'id'             => $this->id,
+                'scoreMaximum'   => $this->scoreMaximum,
+                'label'          => $this->label,
+                'resourceId'     => $this->resourceId,
+                'resourceLinkId' => $this->resourceLinkId,
+                'tag'            => $this->tag,
+                'startDateTime'  => $this->startDateTime ? $this->startDateTime->format() : null,
+                'endDateTime'    => $this->endDateTime ? $this->endDateTime->format() : null,
+            ],
+            '\BNSoftware\Lti1p3\Helpers\Helpers::checkIfNullValue'
+        );
+    }
+
+    public function __toString(): string
+    {
+        return (string)json_encode($this->toArray());
     }
 }

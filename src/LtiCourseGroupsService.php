@@ -4,13 +4,19 @@ namespace BNSoftware\Lti1p3;
 
 class LtiCourseGroupsService extends LtiAbstractService
 {
-    public const CONTENTTYPE_CONTEXTGROUPCONTAINER = 'application/vnd.ims.lti-gs.v1.contextgroupcontainer+json';
+    public const CONTENT_TYPE_CONTEXT_GROUP_CONTAINER = 'application/vnd.ims.lti-gs.v1.contextgroupcontainer+json';
 
+    /**
+     * @return array
+     */
     public function getScope(): array
     {
         return $this->getServiceData()['scope'];
     }
 
+    /**
+     * @return array
+     */
     public function getGroups(): array
     {
         $request = new ServiceRequest(
@@ -18,11 +24,14 @@ class LtiCourseGroupsService extends LtiAbstractService
             $this->getServiceData()['context_groups_url'],
             ServiceRequest::TYPE_GET_GROUPS
         );
-        $request->setAccept(static::CONTENTTYPE_CONTEXTGROUPCONTAINER);
+        $request->setAccept(static::CONTENT_TYPE_CONTEXT_GROUP_CONTAINER);
 
         return $this->getAll($request, 'groups');
     }
 
+    /**
+     * @return array
+     */
     public function getSets(): array
     {
         // Sets are optional.
@@ -35,12 +44,15 @@ class LtiCourseGroupsService extends LtiAbstractService
             $this->getServiceData()['context_group_sets_url'],
             ServiceRequest::TYPE_GET_SETS
         );
-        $request->setAccept(static::CONTENTTYPE_CONTEXTGROUPCONTAINER);
+        $request->setAccept(static::CONTENT_TYPE_CONTEXT_GROUP_CONTAINER);
 
         return $this->getAll($request, 'sets');
     }
 
-    public function getGroupsBySet()
+    /**
+     * @return array
+     */
+    public function getGroupsBySet(): array
     {
         $groups = $this->getGroups();
         $sets = $this->getSets();

@@ -1,11 +1,7 @@
 <?php
 
-namespace Certification;
+namespace Tests\Certification;
 
-use Carbon\Carbon;
-use Firebase\JWT\JWT;
-use GuzzleHttp\Psr7\Response;
-use Mockery;
 use BNSoftware\Lti1p3\Interfaces\ICache;
 use BNSoftware\Lti1p3\Interfaces\ICookie;
 use BNSoftware\Lti1p3\Interfaces\IDatabase;
@@ -17,7 +13,12 @@ use BNSoftware\Lti1p3\LtiException;
 use BNSoftware\Lti1p3\LtiMessageLaunch;
 use BNSoftware\Lti1p3\LtiOidcLogin;
 use BNSoftware\Lti1p3\LtiRegistration;
+use Carbon\Carbon;
+use Firebase\JWT\JWT;
+use GuzzleHttp\Psr7\Response;
+use Mockery;
 use Tests\TestCase;
+use Throwable;
 
 class TestCache implements ICache
 {
@@ -77,8 +78,8 @@ class TestCookie implements ICookie
 
 class TestDb implements IDatabase
 {
-    private $registrations = [];
-    private $deplomyments = [];
+    private array $registrations = [];
+    private array $deployments = [];
 
     public function __construct($registration, $deployment)
     {
@@ -86,12 +87,12 @@ class TestDb implements IDatabase
         $this->deployments[$deployment->getDeploymentId()] = $deployment;
     }
 
-    public function findRegistrationByIssuer($iss, $client_id = null)
+    public function findRegistrationByIssuer($iss, $clientId = null)
     {
         return $this->registrations[$iss];
     }
 
-    public function findDeployment($iss, $deployment_id, $client_id = null)
+    public function findDeployment($iss, $deploymentId, $clientId = null)
     {
         return $this->deployments[$iss];
     }
@@ -101,115 +102,114 @@ class Lti13CertificationTest extends TestCase
 {
     public const ISSUER_URL = 'https://ltiadvantagevalidator.imsglobal.org';
     public const JWKS_FILE = '/tmp/jwks.json';
-    public const CERT_DATA_DIR = __DIR__.'/../data/certification/';
-    public const PRIVATE_KEY = __DIR__.'/../data/private.key';
-
+    public const CERT_DATA_DIR = __DIR__ . '/../data/certification/';
+    public const PRIVATE_KEY = __DIR__ . '/../data/private.key';
     public const STATE = 'state';
-
     private $issuer;
-    private $key;
 
     public function setUp(): void
     {
         $this->issuer = [
-            'id' => 'issuer_id',
-            'issuer' => static::ISSUER_URL,
-            'client_id' => 'imstester_3dfad6d',
-            'auth_login_url' => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/oidcauthurl.html',
-            'auth_token_url' => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/authcodejwt.html',
-            'alg' => 'RS256',
-            'key_set_url' => static::JWKS_FILE,
-            'kid' => 'key-id',
+            'id'               => 'issuer_id',
+            'issuer'           => static::ISSUER_URL,
+            'client_id'        => 'imstester_3dfad6d',
+            'auth_login_url'   => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/oidcauthurl.html',
+            'auth_token_url'   => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/authcodejwt.html',
+            'alg'              => 'RS256',
+            'key_set_url'      => static::JWKS_FILE,
+            'kid'              => 'key-id',
             'tool_private_key' => file_get_contents(static::PRIVATE_KEY),
         ];
 
-        $this->key = [
-            'version' => LtiConstants::V1_3,
-            'issuer_id' => $this->issuer['id'],
+        $key = [
+            'version'       => LtiConstants::V1_3,
+            'issuer_id'     => $this->issuer['id'],
             'deployment_id' => 'testdeploy',
-            'campus_id' => 1,
+            'campus_id'     => 1,
         ];
 
         $this->payload = [
-            LtiConstants::MESSAGE_TYPE => 'LtiResourceLinkRequest',
-            LtiConstants::VERSION => LtiConstants::V1_3,
-            LtiConstants::RESOURCE_LINK => [
-                'id' => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
-                'description' => null,
-                'title' => null,
+            LtiConstants::MESSAGE_TYPE        => 'LtiResourceLinkRequest',
+            LtiConstants::VERSION             => LtiConstants::V1_3,
+            LtiConstants::RESOURCE_LINK       => [
+                'id'                 => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
+                'description'        => null,
+                'title'              => null,
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            'aud' => $this->issuer['client_id'],
-            'azp' => $this->issuer['client_id'],
-            LtiConstants::DEPLOYMENT_ID => $this->key['deployment_id'],
-            'exp' => Carbon::now()->addDay()->timestamp,
-            'iat' => Carbon::now()->subDay()->timestamp,
-            'iss' => $this->issuer['issuer'],
-            'nonce' => 'nonce-5e73ef2f4c6ea0.93530902',
-            'sub' => '66b6a854-9f43-4bb2-90e8-6653c9126272',
-            LtiConstants::TARGET_LINK_URI => 'https://lms-api.packback.localhost/api/lti/launch',
-            LtiConstants::CONTEXT => [
-                'id' => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
-                'label' => 'Canvas Unlauched',
-                'title' => 'Canvas - A Fresh Course That Remains Unlaunched',
-                'type' => [
+            'aud'                             => $this->issuer['client_id'],
+            'azp'                             => $this->issuer['client_id'],
+            LtiConstants::DEPLOYMENT_ID       => $key['deployment_id'],
+            'exp'                             => Carbon::now()->addDay()->timestamp,
+            'iat'                             => Carbon::now()->subDay()->timestamp,
+            'iss'                             => $this->issuer['issuer'],
+            'nonce'                           => 'nonce-5e73ef2f4c6ea0.93530902',
+            'sub'                             => '66b6a854-9f43-4bb2-90e8-6653c9126272',
+            LtiConstants::TARGET_LINK_URI     => 'https://lms-api.packback.localhost/api/lti/launch',
+            LtiConstants::CONTEXT             => [
+                'id'                 => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
+                'label'              => 'Canvas Unlaunched',
+                'title'              => 'Canvas - A Fresh Course That Remains Unlaunched',
+                'type'               => [
                     LtiConstants::COURSE_OFFERING,
                 ],
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            LtiConstants::TOOL_PLATFORM => [
-                'guid' => 'FnwyPrXqSxwv8QCm11UwILpDJMAUPJ9WGn8zcvBM:canvas-lms',
-                'name' => 'BNSoftware',
-                'version' => 'cloud',
+            LtiConstants::TOOL_PLATFORM       => [
+                'guid'                => 'FnwyPrXqSxwv8QCm11UwILpDJMAUPJ9WGn8zcvBM:canvas-lms',
+                'name'                => 'Packback Engineering',
+                'version'             => 'cloud',
                 'product_family_code' => 'canvas',
-                'validation_context' => null,
-                'errors' => [
+                'validation_context'  => null,
+                'errors'              => [
                     'errors' => [],
                 ],
             ],
             LtiConstants::LAUNCH_PRESENTATION => [
-                'document_target' => 'iframe',
-                'height' => 400,
-                'width' => 800,
-                'return_url' => 'https://canvas.localhost/courses/3/external_content/success/external_tool_redirect',
-                'locale' => 'en',
+                'document_target'    => 'iframe',
+                'height'             => 400,
+                'width'              => 800,
+                'return_url'         => 'https://canvas.localhost/courses/3/external_content/success/external_tool_redirect',
+                'locale'             => 'en',
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            'locale' => 'en',
-            LtiConstants::ROLES => [
+            'locale'                          => 'en',
+            LtiConstants::ROLES               => [
                 LtiConstants::INSTITUTION_ADMINISTRATOR,
                 LtiConstants::INSTITUTION_INSTRUCTOR,
                 LtiConstants::MEMBERSHIP_INSTRUCTOR,
-                LtiConstants::SYSTEM_SYSADMIN,
+                LtiConstants::SYSTEM_SYS_ADMIN,
                 LtiConstants::SYSTEM_USER,
             ],
-            LtiConstants::CUSTOM => [],
-            'errors' => [
+            LtiConstants::CUSTOM              => [],
+            'errors'                          => [
                 'errors' => [],
             ],
         ];
 
         $this->db = new TestDb(
-            new LtiRegistration([
-                'issuer' => static::ISSUER_URL,
-                'clientId' => $this->issuer['client_id'],
-                'keySetUrl' => static::JWKS_FILE,
-            ]),
+            new LtiRegistration(
+                [
+                    'issuer'    => static::ISSUER_URL,
+                    'clientId'  => $this->issuer['client_id'],
+                    'keySetUrl' => static::JWKS_FILE,
+                ]
+            ),
             (new LtiDeployment())->setDeploymentId(static::ISSUER_URL)
         );
         $this->cache = new TestCache();
         $this->cookie = new TestCookie();
         $this->cookie->setCookie(
-            LtiOidcLogin::COOKIE_PREFIX.static::STATE,
+            LtiOidcLogin::COOKIE_PREFIX . static::STATE,
             static::STATE
         );
         $this->serviceConnector = Mockery::mock(ILtiServiceConnector::class);
@@ -217,9 +217,13 @@ class Lti13CertificationTest extends TestCase
 
     public function buildJWT($data, $header)
     {
-        $jwks = json_encode(JwksEndpoint::new([
-            $this->issuer['kid'] => $this->issuer['tool_private_key'],
-        ])->getPublicJwks());
+        $jwks = json_encode(
+            JwksEndpoint::new(
+                [
+                    $this->issuer['kid'] => $this->issuer['tool_private_key'],
+                ]
+            )->getPublicJwks()
+        );
         file_put_contents(static::JWKS_FILE, $jwks);
 
         // If we pass in a header, use that instead of creating one automatically based on params given
@@ -227,18 +231,27 @@ class Lti13CertificationTest extends TestCase
             $segments = [];
             $segments[] = JWT::urlsafeB64Encode(JWT::jsonEncode($header));
             $segments[] = JWT::urlsafeB64Encode(JWT::jsonEncode($data));
-            $signing_input = \implode('.', $segments);
+            $signing_input = implode('.', $segments);
 
             $signature = JWT::sign($signing_input, $this->issuer['tool_private_key'], $this->issuer['alg']);
             $segments[] = JWT::urlsafeB64Encode($signature);
 
-            return \implode('.', $segments);
+            return implode('.', $segments);
         }
 
-        return JWT::encode($data, $this->issuer['tool_private_key'], $alg, $this->issuer['kid']);
+        return JWT::encode(
+            $data,
+            $this->issuer['tool_private_key'],
+            $this->issuer['alg'],
+            $this->issuer['kid']
+        );
     }
 
     // tests
+
+    /**
+     * @throws LtiException
+     */
     public function testLtiVersionPassedIsNot13()
     {
         $payload = $this->payload;
@@ -249,6 +262,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testNoLtiVersionPassedIsInJwt()
     {
         $payload = $this->payload;
@@ -259,6 +275,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testJwtPassedIsNotLti13Jwt()
     {
         $jwt = $this->buildJWT([], $this->issuer);
@@ -267,9 +286,9 @@ class Lti13CertificationTest extends TestCase
         $jwt = implode('.', $jwt_r);
 
         $params = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $jwt,
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
 
         $this->expectExceptionMessage('Invalid id_token, JWT must contain 3 parts');
@@ -278,6 +297,9 @@ class Lti13CertificationTest extends TestCase
             ->validate($params);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testExpAndIatFieldsInvalid()
     {
         $payload = $this->payload;
@@ -289,6 +311,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testMessageTypeClaimMissing()
     {
         $payload = $this->payload;
@@ -299,6 +324,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testRoleClaimMissing()
     {
         $payload = $this->payload;
@@ -309,6 +337,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testDeploymentIdClaimMissing()
     {
         $payload = $this->payload;
@@ -319,6 +350,9 @@ class Lti13CertificationTest extends TestCase
         $this->launch($payload);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testLaunchWithMissingResourceLinkId()
     {
         $payload = $this->payload;
@@ -331,7 +365,7 @@ class Lti13CertificationTest extends TestCase
 
     public function testInvalidCertificationCases()
     {
-        $testCasesDir = static::CERT_DATA_DIR.'invalid';
+        $testCasesDir = static::CERT_DATA_DIR . 'invalid';
 
         $testCases = scandir($testCasesDir);
         // Remove . and ..
@@ -344,32 +378,32 @@ class Lti13CertificationTest extends TestCase
         $request = Mockery::mock(Response::class);
         $this->serviceConnector->shouldReceive('makeRequest')
             // All but one invalid cert case get the JWK
-            ->times($casesCount - 1)
+            ->times($casesCount - 2)
             ->andReturn($request);
         $this->serviceConnector->shouldReceive('getResponseBody')
-            ->times($casesCount - 1)
+            ->times($casesCount - 2)
             ->andReturn(json_decode(file_get_contents(static::JWKS_FILE), true));
 
         foreach ($testCases as $testCase) {
-            $testCaseDir = $testCasesDir.DIRECTORY_SEPARATOR.$testCase.DIRECTORY_SEPARATOR;
+            $testCaseDir = $testCasesDir . DIRECTORY_SEPARATOR . $testCase . DIRECTORY_SEPARATOR;
 
             $jwtHeader = null;
-            if (file_exists($testCaseDir.'header.json')) {
+            if (file_exists($testCaseDir . 'header.json')) {
                 $jwtHeader = json_decode(
-                    file_get_contents($testCaseDir.'header.json'),
+                    file_get_contents($testCaseDir . 'header.json'),
                     true
                 );
             }
 
             $payload = json_decode(
-                file_get_contents($testCaseDir.'payload.json'),
+                file_get_contents($testCaseDir . 'payload.json'),
                 true
             );
 
             $keep = null;
-            if (file_exists($testCaseDir.'keep.json')) {
+            if (file_exists($testCaseDir . 'keep.json')) {
                 $keep = json_decode(
-                    file_get_contents($testCaseDir.'keep.json'),
+                    file_get_contents($testCaseDir . 'keep.json'),
                     true
                 );
             }
@@ -382,35 +416,38 @@ class Lti13CertificationTest extends TestCase
             }
 
             // I couldn't find a better output function
-            echo PHP_EOL."--> TESTING INVALID TEST CASE: {$testCase}";
+            echo PHP_EOL . "--> TESTING INVALID TEST CASE: $testCase";
 
-            $jwt = $this->buildJWT($payload, $this->issuer, $jwtHeader);
+            $jwt = $this->buildJWT($payload, $jwtHeader);
             if (isset($payload['nonce'])) {
                 $this->cache->cacheNonce($payload['nonce'], static::STATE);
             }
 
             $params = [
-                'utf8' => '✓',
+                'utf8'     => '✓',
                 'id_token' => $jwt,
-                'state' => static::STATE,
+                'state'    => static::STATE,
             ];
 
             try {
                 LtiMessageLaunch::new($this->db, $this->cache, $this->cookie, $this->serviceConnector)
                     ->validate($params);
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 $this->assertInstanceOf(LtiException::class, $e);
             }
 
-            ++$testedCases;
+            $testedCases++;
         }
         echo PHP_EOL;
         $this->assertEquals($casesCount, $testedCases);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function testValidCertificationCases()
     {
-        $testCasesDir = static::CERT_DATA_DIR.'valid';
+        $testCasesDir = static::CERT_DATA_DIR . 'valid';
 
         $testCases = scandir($testCasesDir);
         // Remove . and ..
@@ -422,7 +459,9 @@ class Lti13CertificationTest extends TestCase
 
         foreach ($testCases as $testCase) {
             $payload = json_decode(
-                file_get_contents($testCasesDir.DIRECTORY_SEPARATOR.$testCase.DIRECTORY_SEPARATOR.'payload.json'),
+                file_get_contents(
+                    $testCasesDir . DIRECTORY_SEPARATOR . $testCase . DIRECTORY_SEPARATOR . 'payload.json'
+                ),
                 true
             );
 
@@ -434,15 +473,15 @@ class Lti13CertificationTest extends TestCase
             $payload['sub'] = 'lms-user-id';
 
             // I couldn't find a better output function
-            echo PHP_EOL."--> TESTING VALID TEST CASE: {$testCase}";
+            echo PHP_EOL . "--> TESTING VALID TEST CASE: $testCase";
 
             $jwt = $this->buildJWT($payload, $this->issuer);
             $this->cache->cacheNonce($payload['nonce'], static::STATE);
 
             $params = [
-                'utf8' => '✓',
+                'utf8'     => '✓',
                 'id_token' => $jwt,
-                'state' => static::STATE,
+                'state'    => static::STATE,
             ];
 
             $request = Mockery::mock(Response::class);
@@ -457,21 +496,15 @@ class Lti13CertificationTest extends TestCase
             // Assertions
             $this->assertInstanceOf(LtiMessageLaunch::class, $result);
 
-            ++$testedCases;
+            $testedCases++;
         }
         echo PHP_EOL;
         $this->assertEquals($casesCount, $testedCases);
     }
 
-    private function login($loginData = null)
-    {
-        $loginData = $loginData ?? [
-            'iss' => $this->issuer['issuer'],
-            'login_hint' => '535fa085f22b4655f48cd5a36a9215f64c062838',
-        ];
-        $loginData['client_id'] = $this->issuer['client_id'];
-    }
-
+    /**
+     * @throws LtiException
+     */
     private function launch($payload)
     {
         $jwt = $this->buildJWT($payload, $this->issuer);
@@ -480,9 +513,9 @@ class Lti13CertificationTest extends TestCase
         }
 
         $params = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $jwt,
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
 
         $request = Mockery::mock(Response::class);
@@ -491,7 +524,7 @@ class Lti13CertificationTest extends TestCase
         $this->serviceConnector->shouldReceive('getResponseBody')
             ->once()->andReturn(json_decode(file_get_contents(static::JWKS_FILE), true));
 
-        return LtiMessageLaunch::new($this->db, $this->cache, $this->cookie, $this->serviceConnector)
+        LtiMessageLaunch::new($this->db, $this->cache, $this->cookie, $this->serviceConnector)
             ->validate($params);
     }
 }

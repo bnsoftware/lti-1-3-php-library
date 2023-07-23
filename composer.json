@@ -10,18 +10,32 @@
         {
             "name": "Dave Young",
             "email": "dave@screenpal.com"
+        },
+        {
+            "name": "Davo Hynds",
+            "email": "davo@packback.co"
+        },
+        {
+            "name": "Eric Tendian",
+            "email": "eric@packback.co"
+        },
+        {
+            "name": "Martin Lenord",
+            "email": "ims.m@rtin.dev"
         }
     ],
     "require": {
         "firebase/php-jwt": "^5.5|^6.0",
         "guzzlehttp/guzzle": "^7.0.1",
-        "phpseclib/phpseclib": "^2.0"
+        "phpseclib/phpseclib": "^3.0",
+        "ext-json": "*"
     },
     "require-dev": {
-        "jubeki/laravel-code-style": "^1.0",
+        "jubeki/laravel-code-style": "^1.0|^2.0",
         "mockery/mockery": "^1.4",
         "nesbot/carbon": "^2.43",
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "ext-dom": "*"
     },
     "autoload": {
         "psr-4": {

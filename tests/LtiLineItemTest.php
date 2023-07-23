@@ -2,31 +2,33 @@
 
 namespace Tests;
 
-use BNSoftware\Lti1p3\LtiLineitem;
+use BNSoftware\Lti1p3\LtiLineItem;
+use BNSoftware\Lti1p3\LtiTimestamp;
+use DateTime;
 
-class LtiLineitemTest extends TestCase
+class LtiLineItemTest extends TestCase
 {
     public function setUp(): void
     {
-        $this->lineItem = new LtiLineitem();
+        $this->lineItem = new LtiLineItem();
     }
 
     public function testItInstantiates()
     {
-        $this->assertInstanceOf(LtiLineitem::class, $this->lineItem);
+        $this->assertInstanceOf(LtiLineItem::class, $this->lineItem);
     }
 
     public function testItCreatesANewInstance()
     {
-        $grade = LtiLineitem::new();
+        $grade = LtiLineItem::new();
 
-        $this->assertInstanceOf(LtiLineitem::class, $grade);
+        $this->assertInstanceOf(LtiLineItem::class, $grade);
     }
 
     public function testItGetsId()
     {
         $expected = 'expected';
-        $grade = new LtiLineitem(['id' => $expected]);
+        $grade = new LtiLineItem(['id' => $expected]);
 
         $result = $grade->getId();
 
@@ -44,8 +46,8 @@ class LtiLineitemTest extends TestCase
 
     public function testItGetsScoreMaximum()
     {
-        $expected = 'expected';
-        $grade = new LtiLineitem(['scoreMaximum' => $expected]);
+        $expected = 100;
+        $grade = new LtiLineItem(['scoreMaximum' => $expected]);
 
         $result = $grade->getScoreMaximum();
 
@@ -54,7 +56,7 @@ class LtiLineitemTest extends TestCase
 
     public function testItSetsScoreMaximum()
     {
-        $expected = 'expected';
+        $expected = 100;
 
         $this->lineItem->setScoreMaximum($expected);
 
@@ -64,7 +66,7 @@ class LtiLineitemTest extends TestCase
     public function testItGetsLabel()
     {
         $expected = 'expected';
-        $grade = new LtiLineitem(['label' => $expected]);
+        $grade = new LtiLineItem(['label' => $expected]);
 
         $result = $grade->getLabel();
 
@@ -83,7 +85,7 @@ class LtiLineitemTest extends TestCase
     public function testItGetsResourceId()
     {
         $expected = 'expected';
-        $grade = new LtiLineitem(['resourceId' => $expected]);
+        $grade = new LtiLineItem(['resourceId' => $expected]);
 
         $result = $grade->getResourceId();
 
@@ -102,7 +104,7 @@ class LtiLineitemTest extends TestCase
     public function testItGetsResourceLinkId()
     {
         $expected = 'expected';
-        $grade = new LtiLineitem(['resourceLinkId' => $expected]);
+        $grade = new LtiLineItem(['resourceLinkId' => $expected]);
 
         $result = $grade->getResourceLinkId();
 
@@ -121,7 +123,7 @@ class LtiLineitemTest extends TestCase
     public function testItGetsTag()
     {
         $expected = 'expected';
-        $grade = new LtiLineitem(['tag' => $expected]);
+        $grade = new LtiLineItem(['tag' => $expected]);
 
         $result = $grade->getTag();
 
@@ -139,8 +141,8 @@ class LtiLineitemTest extends TestCase
 
     public function testItGetsStartDateTime()
     {
-        $expected = 'expected';
-        $grade = new LtiLineitem(['startDateTime' => $expected]);
+        $expected = LtiTimestamp::new("2023-01-01T00:00:00+00:00");
+        $grade = new LtiLineItem(['startDateTime' => $expected]);
 
         $result = $grade->getStartDateTime();
 
@@ -149,7 +151,7 @@ class LtiLineitemTest extends TestCase
 
     public function testItSetsStartDateTime()
     {
-        $expected = 'expected';
+        $expected = LtiTimestamp::new("2023-01-01T00:00:00+00:00");
 
         $this->lineItem->setStartDateTime($expected);
 
@@ -158,8 +160,8 @@ class LtiLineitemTest extends TestCase
 
     public function testItGetsEndDateTime()
     {
-        $expected = 'expected';
-        $grade = new LtiLineitem(['endDateTime' => $expected]);
+        $expected = LtiTimestamp::new("2023-01-01T00:00:00+00:00");
+        $grade = new LtiLineItem(['endDateTime' => $expected]);
 
         $result = $grade->getEndDateTime();
 
@@ -168,33 +170,56 @@ class LtiLineitemTest extends TestCase
 
     public function testItSetsEndDateTime()
     {
-        $expected = 'expected';
+        $expected = LtiTimestamp::new("2023-01-01T00:00:00+00:00");
 
         $this->lineItem->setEndDateTime($expected);
 
         $this->assertEquals($expected, $this->lineItem->getEndDateTime());
     }
 
+    public function testToArrayWithFullObject()
+    {
+        $expected = [
+            'id'             => 'Id',
+            'scoreMaximum'   => 100,
+            'label'          => 'Label',
+            'resourceId'     => 'ResourceId',
+            'resourceLinkId' => 'ResourceLinkId',
+            'tag'            => 'Tag',
+            'startDateTime'  => LtiTimestamp::new("2023-01-01T00:00:00+00:00")->format(),
+            'endDateTime'    => LtiTimestamp::new(new DateTime())->format(),
+        ];
+
+        $lineItem = new LtiLineItem($expected);
+
+        $this->assertEquals($expected, $lineItem->toArray());
+    }
+
+    public function testToArrayWithEmptyObject()
+    {
+        $this->assertEquals([], $this->lineItem->toArray());
+    }
+
     public function testItCastsFullObjectToString()
     {
         $expected = [
-            'id' => 'Id',
-            'scoreMaximum' => 'ScoreMaximum',
-            'label' => 'Label',
-            'resourceId' => 'ResourceId',
+            'id'             => 'Id',
+            'scoreMaximum'   => 100,
+            'label'          => 'Label',
+            'resourceId'     => 'ResourceId',
             'resourceLinkId' => 'ResourceLinkId',
-            'tag' => 'Tag',
-            'startDateTime' => 'StartDateTime',
-            'endDateTime' => 'EndDateTime',
+            'tag'            => 'Tag',
+            'startDateTime'  => LtiTimestamp::new("2023-01-01T00:00:00+00:00")->format(),
+            'endDateTime'    => LtiTimestamp::new(new DateTime())->format(),
         ];
 
-        $lineItem = new LtiLineitem($expected);
+        $lineItem = new LtiLineItem($expected);
 
-        $this->assertEquals(json_encode($expected), (string) $lineItem);
+        $this->assertEquals(json_encode($expected), (string)$lineItem);
     }
 
     public function testItCastsEmptyObjectToString()
     {
-        $this->assertEquals('[]', (string) $this->lineItem);
+        $this->assertEquals('[]', (string)$this->lineItem);
     }
 }

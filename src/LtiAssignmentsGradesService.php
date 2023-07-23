@@ -4,18 +4,21 @@ namespace BNSoftware\Lti1p3;
 
 class LtiAssignmentsGradesService extends LtiAbstractService
 {
-    public const CONTENTTYPE_SCORE = 'application/vnd.ims.lis.v1.score+json';
-    public const CONTENTTYPE_LINEITEM = 'application/vnd.ims.lis.v2.lineitem+json';
-    public const CONTENTTYPE_LINEITEMCONTAINER = 'application/vnd.ims.lis.v2.lineitemcontainer+json';
-    public const CONTENTTYPE_RESULTCONTAINER = 'application/vnd.ims.lis.v2.resultcontainer+json';
+    public const CONTENT_TYPE_SCORE = 'application/vnd.ims.lis.v1.score+json';
+    public const CONTENT_TYPE_LINE_ITEM = 'application/vnd.ims.lis.v2.lineitem+json';
+    public const CONTENT_TYPE_LINE_ITEM_CONTAINER = 'application/vnd.ims.lis.v2.lineitemcontainer+json';
+    public const CONTENT_TYPE_RESULT_CONTAINER = 'application/vnd.ims.lis.v2.resultcontainer+json';
 
+    /**
+     * @return array
+     */
     public function getScope(): array
     {
         return $this->getServiceData()['scope'];
     }
 
     // https://www.imsglobal.org/spec/lti-ags/v2p0#assignment-and-grade-service-claim
-    // When an LTI message is launching a resource associated to one and only one lineitem,
+    // When an LTI message is launching a resource associated to one and only one line item,
     // the claim must include the endpoint URL for accessing the associated line item;
     // in all other cases, this property must be either blank or not included in the claim.
     public function getResourceLaunchLineItem(): ?LtiLineItem
@@ -28,19 +31,22 @@ class LtiAssignmentsGradesService extends LtiAbstractService
         return LtiLineItem::new()->setId($serviceData['lineitem']);
     }
 
-    public function putGrade(LtiGrade $grade, LtiLineItem $lineitem = null)
+    /**
+     * @throws LtiException
+     */
+    public function putGrade(LtiGrade $grade, LtiLineItem $lineItem = null): array
     {
-        if (!in_array(LtiConstants::AGS_SCOPE_SCORE, $this->getScope())) {
-            throw new LtiException('Missing required scope', 1);
-        }
+        $this->validateScopes([LtiConstants::AGS_SCOPE_SCORE]);
 
-        $lineitem = $this->ensureLineItemExists($lineitem);
+        $lineItem = $this->ensureLineItemExists($lineItem);
 
-        $scoreUrl = $lineitem->getId();
+        $scoreUrl = $lineItem->getId();
 
         // Place '/scores' before url params
         $pos = strpos($scoreUrl, '?');
-        $scoreUrl = $pos === false ? $scoreUrl.'/scores' : substr_replace($scoreUrl, '/scores', $pos, 0);
+        $scoreUrl = $pos === false
+            ? $scoreUrl . '/scores'
+            : substr_replace($scoreUrl, '/scores', $pos, 0);
 
         $request = new ServiceRequest(
             ServiceRequest::METHOD_POST,
@@ -48,150 +54,203 @@ class LtiAssignmentsGradesService extends LtiAbstractService
             ServiceRequest::TYPE_SYNC_GRADE
         );
         $request->setBody($grade);
-        $request->setContentType(static::CONTENTTYPE_SCORE);
+        $request->setContentType(static::CONTENT_TYPE_SCORE);
 
         return $this->makeServiceRequest($request);
     }
 
+    /**
+     * @throws LtiException
+     */
     public function findLineItem(LtiLineItem $newLineItem): ?LtiLineItem
     {
-        $lineitems = $this->getLineItems();
+        $lineItems = $this->getLineItems();
 
-        foreach ($lineitems as $lineitem) {
-            if ($this->isMatchingLineItem($lineitem, $newLineItem)) {
-                return new LtiLineItem($lineitem);
+        foreach ($lineItems as $lineItem) {
+            if ($this->isMatchingLineItem($lineItem, $newLineItem)) {
+                return new LtiLineItem ($lineItem);
             }
         }
 
         return null;
     }
 
-    public function updateLineItem(LtiLineItem $lineitemToUpdate): LtiLineItem
+    /**
+     * @param LtiLineItem $lineItemToUpdate
+     * @return LtiLineItem
+     */
+    public function updateLineItem(LtiLineItem $lineItemToUpdate): LtiLineItem
     {
         $request = new ServiceRequest(
             ServiceRequest::METHOD_PUT,
-            $this->getServiceData()['lineitems'],
-            ServiceRequest::TYPE_UPDATE_LINEITEM
+            $this->getServiceData()['lineitem'],
+            ServiceRequest::TYPE_UPDATE_LINE_ITEM
         );
 
-        $request->setBody($lineitemToUpdate)
-            ->setContentType(static::CONTENTTYPE_LINEITEM)
-            ->setAccept(static::CONTENTTYPE_LINEITEM);
+        $request->setBody($lineItemToUpdate)
+            ->setContentType(static::CONTENT_TYPE_LINE_ITEM)
+            ->setAccept(static::CONTENT_TYPE_LINE_ITEM);
 
         $updatedLineItem = $this->makeServiceRequest($request);
 
         return new LtiLineItem($updatedLineItem['body']);
     }
 
+    /**
+     * @param LtiLineItem $newLineItem
+     * @return LtiLineItem
+     */
     public function createLineItem(LtiLineItem $newLineItem): LtiLineItem
     {
         $request = new ServiceRequest(
             ServiceRequest::METHOD_POST,
             $this->getServiceData()['lineitems'],
-            ServiceRequest::TYPE_CREATE_LINEITEM
+            ServiceRequest::TYPE_CREATE_LINE_ITEM
         );
         $request->setBody($newLineItem)
-            ->setContentType(static::CONTENTTYPE_LINEITEM)
-            ->setAccept(static::CONTENTTYPE_LINEITEM);
+            ->setContentType(static::CONTENT_TYPE_LINE_ITEM)
+            ->setAccept(static::CONTENT_TYPE_LINE_ITEM);
         $createdLineItem = $this->makeServiceRequest($request);
 
-        return new LtiLineItem($createdLineItem['body']);
+        return new LtiLineItem ($createdLineItem['body']);
     }
 
+    /**
+     * @return array
+     */
+    public function deleteLineItem(): array
+    {
+        $request = new ServiceRequest(
+            ServiceRequest::METHOD_DELETE,
+            $this->getServiceData()['lineitem'],
+            ServiceRequest::TYPE_DELETE_LINE_ITEM
+        );
+
+        return $this->makeServiceRequest($request);
+    }
+
+    /**
+     * @param LtiLineItem $newLineItem
+     * @return LtiLineItem
+     * @throws LtiException
+     */
     public function findOrCreateLineItem(LtiLineItem $newLineItem): LtiLineItem
     {
         return $this->findLineItem($newLineItem) ?? $this->createLineItem($newLineItem);
     }
 
-    public function getGrades(LtiLineItem $lineitem = null)
+    /**
+     * @param ?LtiLineItem $lineItem
+     * @return mixed
+     */
+    public function getGrades(?LtiLineItem $lineItem = null)
     {
-        $lineitem = $this->ensureLineItemExists($lineitem);
-        $resultsUrl = $lineitem->getId();
+        $lineItem = $this->ensureLineItemExists($lineItem);
+        $resultsUrl = $lineItem->getId();
 
         // Place '/results' before url params
         $pos = strpos($resultsUrl, '?');
-        $resultsUrl = $pos === false ? $resultsUrl.'/results' : substr_replace($resultsUrl, '/results', $pos, 0);
+        $resultsUrl = $pos === false
+            ? $resultsUrl . '/results'
+            : substr_replace($resultsUrl, '/results', $pos, 0);
 
         $request = new ServiceRequest(
             ServiceRequest::METHOD_GET,
             $resultsUrl,
             ServiceRequest::TYPE_GET_GRADES
         );
-        $request->setAccept(static::CONTENTTYPE_RESULTCONTAINER);
+        $request->setAccept(static::CONTENT_TYPE_RESULT_CONTAINER);
         $scores = $this->makeServiceRequest($request);
 
         return $scores['body'];
     }
 
+
+    /**
+     * @return array
+     * @throws LtiException
+     */
     public function getLineItems(): array
     {
-        if (!in_array(LtiConstants::AGS_SCOPE_LINEITEM, $this->getScope())) {
-            throw new LtiException('Missing required scope', 1);
-        }
+        $this->validateScopes([LtiConstants::AGS_SCOPE_LINE_ITEM, LtiConstants::AGS_SCOPE_LINE_ITEM_READONLY]);
 
         $request = new ServiceRequest(
             ServiceRequest::METHOD_GET,
             $this->getServiceData()['lineitems'],
-            ServiceRequest::TYPE_GET_LINEITEMS
+            ServiceRequest::TYPE_GET_LINE_ITEMS
         );
-        $request->setAccept(static::CONTENTTYPE_LINEITEMCONTAINER);
+        $request->setAccept(static::CONTENT_TYPE_LINE_ITEM_CONTAINER);
 
-        $lineitems = $this->getAll($request);
+        $lineItems = $this->getAll($request);
 
         // If there is only one item, then wrap it in an array so the foreach works
-        if (isset($lineitems['body']['id'])) {
-            $lineitems['body'] = [$lineitems['body']];
+        if (isset($lineItems['body']['id'])) {
+            $lineItems['body'] = [$lineItems['body']];
         }
 
-        return $lineitems;
+        return $lineItems;
     }
 
+
+    /**
+     * @param string $url
+     * @return LtiLineItem
+     * @throws LtiException
+     */
     public function getLineItem(string $url): LtiLineItem
     {
-        if (!in_array(LtiConstants::AGS_SCOPE_LINEITEM, $this->getScope())) {
-            throw new LtiException('Missing required scope', 1);
-        }
+        $this->validateScopes([LtiConstants::AGS_SCOPE_LINE_ITEM, LtiConstants::AGS_SCOPE_LINE_ITEM_READONLY]);
 
         $request = new ServiceRequest(
             ServiceRequest::METHOD_GET,
             $url,
-            ServiceRequest::TYPE_GET_LINEITEM
+            ServiceRequest::TYPE_GET_LINE_ITEM
         );
-        $request->setAccept(static::CONTENTTYPE_LINEITEM);
+        $request->setAccept(static::CONTENT_TYPE_LINE_ITEM);
 
         $response = $this->makeServiceRequest($request)['body'];
 
-        return new LtiLineItem($response);
+        return new LtiLineItem ($response);
     }
 
-    private function ensureLineItemExists(LtiLineItem $lineitem = null): LtiLineItem
+    /**
+     * @param ?LtiLineItem $lineItem
+     * @return LtiLineItem
+     * @throws LtiException
+     */
+    private function ensureLineItemExists(LtiLineItem $lineItem = null): LtiLineItem
     {
         // If no line item is passed in, attempt to use the one associated with
         // this launch.
-        if (!isset($lineitem)) {
-            $lineitem = $this->getResourceLaunchLineItem();
+        if (!isset($lineItem)) {
+            $lineItem = $this->getResourceLaunchLineItem();
         }
 
         // If none exists still, create a default line item.
-        if (!isset($lineitem)) {
+        if (!isset($lineItem)) {
             $defaultLineItem = LtiLineItem::new()
                 ->setLabel('default')
                 ->setScoreMaximum(100);
-            $lineitem = $this->createLineItem($defaultLineItem);
+            $lineItem = $this->createLineItem($defaultLineItem);
         }
 
         // If the line item does not contain an ID, find or create it.
-        if (empty($lineitem->getId())) {
-            $lineitem = $this->findOrCreateLineItem($lineitem);
+        if (empty($lineItem->getId())) {
+            $lineItem = $this->findOrCreateLineItem($lineItem);
         }
 
-        return $lineitem;
+        return $lineItem;
     }
 
-    private function isMatchingLineItem(array $lineitem, LtiLineItem $newLineItem): bool
+    /**
+     * @param array       $lineItem
+     * @param LtiLineItem $newLineItem
+     * @return bool
+     */
+    private function isMatchingLineItem(array $lineItem, LtiLineItem $newLineItem): bool
     {
-        return $newLineItem->getTag() == ($lineitem['tag'] ?? null) &&
-            $newLineItem->getResourceId() == ($lineitem['resourceId'] ?? null) &&
-            $newLineItem->getResourceLinkId() == ($lineitem['resourceLinkId'] ?? null);
+        return $newLineItem->getTag() == ($lineItem['tag'] ?? null) &&
+            $newLineItem->getResourceId() == ($lineItem['resourceId'] ?? null) &&
+            $newLineItem->getResourceLinkId() == ($lineItem['resourceLinkId'] ?? null);
     }
 }

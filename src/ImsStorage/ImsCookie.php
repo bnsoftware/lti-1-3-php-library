@@ -6,6 +6,10 @@ use BNSoftware\Lti1p3\Interfaces\ICookie;
 
 class ImsCookie implements ICookie
 {
+    /**
+     * @param string $name
+     * @return string|null
+     */
     public function getCookie(string $name): ?string
     {
         if (isset($_COOKIE[$name])) {
@@ -19,7 +23,14 @@ class ImsCookie implements ICookie
         return null;
     }
 
-    public function setCookie(string $name, string $value, $exp = 3600, $options = []): void
+    /**
+     * @param string $name
+     * @param string $value
+     * @param int    $exp
+     * @param array  $options
+     * @return void
+     */
+    public function setCookie(string $name, string $value, int $exp = 3600, array $options = []): void
     {
         $cookie_options = [
             'expires' => time() + $exp,
