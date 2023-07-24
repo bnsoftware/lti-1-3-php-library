@@ -10,7 +10,7 @@ use BNSoftware\Lti1p3\LtiDeepLinkResourceIframe;
 use BNSoftware\Lti1p3\LtiDeepLinkResourceThumbnail;
 use BNSoftware\Lti1p3\LtiDeepLinkResourceWindow;
 use BNSoftware\Lti1p3\LtiException;
-use BNSoftware\Lti1p3\LtiLineitem;
+use BNSoftware\Lti1p3\LtiLineItem;
 use Mockery;
 
 class LtiDeepLinkResourceTest extends TestCase
@@ -111,7 +111,7 @@ class LtiDeepLinkResourceTest extends TestCase
 
     public function testItSetsLineItem()
     {
-        $expected = Mockery::mock(LtiLineitem::class);
+        $expected = Mockery::mock(LtiLineItem::class);
 
         $result = $this->deepLinkResource->setLineItem($expected);
 
@@ -264,7 +264,7 @@ class LtiDeepLinkResourceTest extends TestCase
             'submission' => $resourceDateTimeInterval->toArray(),
         ];
 
-        $lineItem = Mockery::mock(LtiLineitem::class);
+        $lineItem = Mockery::mock(LtiLineItem::class);
         $lineItem->shouldReceive('toArray')
             ->twice()->andReturn($expected['lineItem']);
 
