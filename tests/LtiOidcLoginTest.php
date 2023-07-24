@@ -41,6 +41,9 @@ class LtiOidcLoginTest extends TestCase
         $this->assertInstanceOf(LtiOidcLogin::class, $this->oidcLogin);
     }
 
+    /**
+     * @throws OidcException
+     */
     public function testItValidatesARequest()
     {
         $expected = 'expected';
@@ -87,6 +90,7 @@ class LtiOidcLoginTest extends TestCase
 
     /**
      * @runInSeparateProcess
+     *
      * @preserveGlobalState disabled
      */
     public function testValidatesFailsIfRegistrationNotFound()

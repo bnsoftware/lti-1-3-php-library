@@ -4,6 +4,7 @@ namespace Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
 use BNSoftware\Lti1p3\Interfaces\ICache;
@@ -13,6 +14,7 @@ use BNSoftware\Lti1p3\LtiRegistration;
 use BNSoftware\Lti1p3\LtiServiceConnector;
 use BNSoftware\Lti1p3\ServiceRequest;
 use Psr\Http\Message\StreamInterface;
+use Throwable;
 
 class LtiServiceConnectorTest extends TestCase
 {
@@ -20,18 +22,22 @@ class LtiServiceConnectorTest extends TestCase
      * @var Mockery\MockInterface
      */
     private $registration;
+
     /**
      * @var Mockery\MockInterface
      */
     private $cache;
+
     /**
      * @var Mockery\MockInterface
      */
     private $client;
+
     /**
      * @var Mockery\MockInterface
      */
     private $response;
+
     /**
      * @var LtiServiceConnector
      */
@@ -75,6 +81,9 @@ class LtiServiceConnectorTest extends TestCase
         $this->assertInstanceOf(LtiServiceConnector::class, $this->connector);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testItGetsCachedAccessToken()
     {
         $this->mockCacheHasAccessToken();
@@ -84,6 +93,9 @@ class LtiServiceConnectorTest extends TestCase
         $this->assertEquals($result, $this->token);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testItGetsNewAccessToken()
     {
         $registration = new LtiRegistration([
@@ -110,6 +122,10 @@ class LtiServiceConnectorTest extends TestCase
         $this->assertEquals($result, $this->token);
     }
 
+    /**
+     * @throws Throwable
+     * @throws GuzzleException
+     */
     public function testItMakesAServiceRequest()
     {
         $expected = [
@@ -143,6 +159,10 @@ class LtiServiceConnectorTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
+    /**
+     * @throws GuzzleException
+     * @throws Throwable
+     */
     public function testItRetriesServiceRequestOn401Error()
     {
         $this->method = ServiceRequest::METHOD_POST;
@@ -213,6 +233,10 @@ class LtiServiceConnectorTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
+    /**
+     * @throws GuzzleException
+     * @throws Throwable
+     */
     public function testItThrowsOnRepeated401Errors()
     {
         $this->method = ServiceRequest::METHOD_POST;
@@ -232,13 +256,6 @@ class LtiServiceConnectorTest extends TestCase
             'body' => $this->body,
         ];
         $this->responseBody = ['some' => 'response'];
-        $expected = [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Server' => 'nginx',
-            ],
-            'body' => $this->responseBody,
-        ];
 
         // It gets an access token
         $this->mockCacheHasAccessToken();
@@ -270,18 +287,21 @@ class LtiServiceConnectorTest extends TestCase
         $this->connector->makeServiceRequest($this->registration, $this->scopes, $this->request);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testItGetsAll()
     {
         $method = ServiceRequest::METHOD_GET;
-        $key = 'lineitems';
-        $lineitems = ['lineitem'];
+        $key = 'lineItems';
+        $lineItems = ['lineItem'];
         $firstResponseHeaders = [
             'Link' => ['Something<'.$this->url.'>;rel="next"'],
             'Content-Type' => ['application/json'],
             'Server' => ['nginx'],
         ];
-        $responseBody = json_encode([$key => $lineitems]);
-        $expected = array_merge($lineitems, $lineitems);
+        $responseBody = json_encode([$key => $lineItems]);
+        $expected = array_merge($lineItems, $lineItems);
 
         // Sets the access token on two requests
         $this->registration->shouldReceive('getClientId')

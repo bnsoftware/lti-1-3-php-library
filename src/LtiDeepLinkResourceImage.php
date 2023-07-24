@@ -4,9 +4,9 @@ namespace BNSoftware\Lti1p3;
 
 class LtiDeepLinkResourceImage
 {
-    private $url;
-    private $width;
-    private $height;
+    private string $url;
+    private int $width;
+    private int $height;
 
     /**
      * @param string $url
@@ -52,7 +52,7 @@ class LtiDeepLinkResourceImage
 
     /**
      * @param int $width
-     * @return $this
+     * @return LtiDeepLinkResourceImage
      */
     public function setWidth(int $width): LtiDeepLinkResourceImage
     {

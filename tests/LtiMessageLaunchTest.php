@@ -2,10 +2,6 @@
 
 namespace Tests;
 
-use Carbon\Carbon;
-use Firebase\JWT\JWT;
-use GuzzleHttp\Psr7\Response;
-use Mockery;
 use BNSoftware\Lti1p3\Interfaces\ICache;
 use BNSoftware\Lti1p3\Interfaces\ICookie;
 use BNSoftware\Lti1p3\Interfaces\IDatabase;
@@ -19,16 +15,22 @@ use BNSoftware\Lti1p3\LtiDeepLink;
 use BNSoftware\Lti1p3\LtiException;
 use BNSoftware\Lti1p3\LtiMessageLaunch;
 use BNSoftware\Lti1p3\LtiNamesRolesProvisioningService;
+use Carbon\Carbon;
+use Firebase\JWT\JWT;
+use GuzzleHttp\Psr7\Response;
+use Mockery;
 
 class LtiMessageLaunchTest extends TestCase
 {
     public const ISSUER_URL = 'https://ltiadvantagevalidator.imsglobal.org';
     public const JWKS_FILE = '/tmp/jwks.json';
-    public const CERT_DATA_DIR = __DIR__.'/data/certification/';
-    public const PRIVATE_KEY = __DIR__.'/data/private.key';
-
+    public const CERT_DATA_DIR = __DIR__ . '/data/certification/';
+    public const PRIVATE_KEY = __DIR__ . '/data/private.key';
     public const STATE = 'state';
 
+    /**
+     * @return void
+     */
     public function setUp(): void
     {
         $this->cache = Mockery::mock(ICache::class);
@@ -45,98 +47,104 @@ class LtiMessageLaunchTest extends TestCase
         );
 
         $this->issuer = [
-            'id' => 'issuer_id',
-            'issuer' => static::ISSUER_URL,
-            'client_id' => 'imstester_3dfad6d',
-            'auth_login_url' => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/oidcauthurl.html',
-            'auth_token_url' => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/authcodejwt.html',
-            'alg' => 'RS256',
-            'key_set_url' => static::JWKS_FILE,
-            'kid' => 'key-id',
+            'id'               => 'issuer_id',
+            'issuer'           => static::ISSUER_URL,
+            'client_id'        => 'imstester_3dfad6d',
+            'auth_login_url'   => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/oidcauthurl.html',
+            'auth_token_url'   => 'https://ltiadvantagevalidator.imsglobal.org/ltitool/authcodejwt.html',
+            'alg'              => 'RS256',
+            'key_set_url'      => static::JWKS_FILE,
+            'kid'              => 'key-id',
             'tool_private_key' => file_get_contents(static::PRIVATE_KEY),
         ];
 
         $this->key = [
-            'version' => LtiConstants::V1_3,
-            'issuer_id' => $this->issuer['id'],
+            'version'       => LtiConstants::V1_3,
+            'issuer_id'     => $this->issuer['id'],
             'deployment_id' => 'testdeploy',
-            'campus_id' => 1,
+            'campus_id'     => 1,
         ];
 
         $this->payload = [
-            LtiConstants::MESSAGE_TYPE => 'LtiResourceLinkRequest',
-            LtiConstants::VERSION => LtiConstants::V1_3,
-            LtiConstants::RESOURCE_LINK => [
-                'id' => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
-                'description' => null,
-                'title' => null,
+            LtiConstants::MESSAGE_TYPE        => 'LtiResourceLinkRequest',
+            LtiConstants::VERSION             => LtiConstants::V1_3,
+            LtiConstants::RESOURCE_LINK       => [
+                'id'                 => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
+                'description'        => null,
+                'title'              => null,
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            'aud' => $this->issuer['client_id'],
-            'azp' => $this->issuer['client_id'],
-            LtiConstants::DEPLOYMENT_ID => $this->key['deployment_id'],
-            'exp' => Carbon::now()->addDay()->timestamp,
-            'iat' => Carbon::now()->subDay()->timestamp,
-            'iss' => $this->issuer['issuer'],
-            'nonce' => 'nonce-5e73ef2f4c6ea0.93530902',
-            'sub' => '66b6a854-9f43-4bb2-90e8-6653c9126272',
-            LtiConstants::TARGET_LINK_URI => 'https://lms-api.packback.localhost/api/lti/launch',
-            LtiConstants::CONTEXT => [
-                'id' => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
-                'label' => 'Canvas Unlauched',
-                'title' => 'Canvas - A Fresh Course That Remains Unlaunched',
-                'type' => [
+            'aud'                             => $this->issuer['client_id'],
+            'azp'                             => $this->issuer['client_id'],
+            LtiConstants::DEPLOYMENT_ID       => $this->key['deployment_id'],
+            'exp'                             => Carbon::now()->addDay()->timestamp,
+            'iat'                             => Carbon::now()->subDay()->timestamp,
+            'iss'                             => $this->issuer['issuer'],
+            'nonce'                           => 'nonce-5e73ef2f4c6ea0.93530902',
+            'sub'                             => '66b6a854-9f43-4bb2-90e8-6653c9126272',
+            LtiConstants::TARGET_LINK_URI     => 'https://lms-api.packback.localhost/api/lti/launch',
+            LtiConstants::CONTEXT             => [
+                'id'                 => 'd3a2504bba5184799a38f141e8df2335cfa8206d',
+                'label'              => 'Canvas Unlauched',
+                'title'              => 'Canvas - A Fresh Course That Remains Unlaunched',
+                'type'               => [
                     LtiConstants::COURSE_OFFERING,
                 ],
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            LtiConstants::TOOL_PLATFORM => [
-                'guid' => 'FnwyPrXqSxwv8QCm11UwILpDJMAUPJ9WGn8zcvBM:canvas-lms',
-                'name' => 'BNSoftware',
-                'version' => 'cloud',
+            LtiConstants::TOOL_PLATFORM       => [
+                'guid'                => 'FnwyPrXqSxwv8QCm11UwILpDJMAUPJ9WGn8zcvBM:canvas-lms',
+                'name'                => 'Packback Engineering',
+                'version'             => 'cloud',
                 'product_family_code' => 'canvas',
-                'validation_context' => null,
-                'errors' => [
+                'validation_context'  => null,
+                'errors'              => [
                     'errors' => [],
                 ],
             ],
             LtiConstants::LAUNCH_PRESENTATION => [
-                'document_target' => 'iframe',
-                'height' => 400,
-                'width' => 800,
-                'return_url' => 'https://canvas.localhost/courses/3/external_content/success/external_tool_redirect',
-                'locale' => 'en',
+                'document_target'    => 'iframe',
+                'height'             => 400,
+                'width'              => 800,
+                'return_url'         => 'https://canvas.localhost/courses/3/external_content/success/external_tool_redirect',
+                'locale'             => 'en',
                 'validation_context' => null,
-                'errors' => [
+                'errors'             => [
                     'errors' => [],
                 ],
             ],
-            'locale' => 'en',
-            LtiConstants::ROLES => [
+            'locale'                          => 'en',
+            LtiConstants::ROLES               => [
                 LtiConstants::INSTITUTION_ADMINISTRATOR,
                 LtiConstants::INSTITUTION_INSTRUCTOR,
                 LtiConstants::MEMBERSHIP_INSTRUCTOR,
-                LtiConstants::SYSTEM_SYSADMIN,
+                LtiConstants::SYSTEM_SYS_ADMIN,
                 LtiConstants::SYSTEM_USER,
             ],
-            LtiConstants::CUSTOM => [],
-            'errors' => [
+            LtiConstants::CUSTOM              => [],
+            'errors'                          => [
                 'errors' => [],
             ],
         ];
     }
 
+    /**
+     * @return void
+     */
     public function testItInstantiates()
     {
         $this->assertInstanceOf(LtiMessageLaunch::class, $this->messageLaunch);
     }
 
+    /**
+     * @return void
+     */
     public function testItCreatesANewInstance()
     {
         $messageLaunch = LtiMessageLaunch::new(
@@ -148,6 +156,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiMessageLaunch::class, $messageLaunch);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testItGetsALaunchFromTheCache()
     {
         $this->cache->shouldReceive('getLaunchData')
@@ -162,12 +174,16 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiMessageLaunch::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testItValidatesALaunch()
     {
         $params = [
-            'utf8' => '✓',
-            'id_token' => $this->buildJWT($this->payload, $this->issuer),
-            'state' => static::STATE,
+            'utf8'     => '✓',
+            'id_token' => $this->buildJWT($this->payload, false),
+            'state'    => static::STATE,
         ];
 
         $this->cookie->shouldReceive('getCookie')
@@ -194,12 +210,16 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiMessageLaunch::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfCookiesAreDisabled()
     {
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($this->payload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn();
@@ -210,10 +230,14 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfIdTokenIsMissing()
     {
         $payload = [
-            'utf8' => '✓',
+            'utf8'  => '✓',
             'state' => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
@@ -225,12 +249,16 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfJwtIsInvalid()
     {
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => 'nope',
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -241,14 +269,18 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfNonceIsMissing()
     {
         $jwtPayload = $this->payload;
         unset($jwtPayload['nonce']);
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($jwtPayload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -259,14 +291,18 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfNonceIsInvalid()
     {
         $jwtPayload = $this->payload;
         $jwtPayload['nonce'] = 'schmonze';
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($jwtPayload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -279,12 +315,16 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfMissingRegistration()
     {
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($this->payload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -294,18 +334,25 @@ class LtiMessageLaunchTest extends TestCase
             ->once()->andReturn();
 
         $this->expectException(LtiException::class);
-        $expectedMsg = $this->messageLaunch->getMissingRegistrationErrorMsg($this->issuer['issuer'], $this->issuer['client_id']);
+        $expectedMsg = $this->messageLaunch->getMissingRegistrationErrorMsg(
+            $this->issuer['issuer'],
+            $this->issuer['client_id']
+        );
         $this->expectExceptionMessage($expectedMsg);
 
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfRegistrationClientIdIsWrong()
     {
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($this->payload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -322,14 +369,18 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfKIDIsMissing()
     {
         $jwtHeader = $this->issuer;
         unset($jwtHeader['kid']);
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($this->payload, $jwtHeader),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -346,14 +397,18 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfDeploymentIdIsMissing()
     {
         $jwtPayload = $this->payload;
         unset($jwtPayload[LtiConstants::DEPLOYMENT_ID]);
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($jwtPayload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -376,13 +431,17 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchFailsIfNoDeployment()
     {
         $jwtPayload = $this->payload;
         $payload = [
-            'utf8' => '✓',
+            'utf8'     => '✓',
             'id_token' => $this->buildJWT($jwtPayload, $this->issuer),
-            'state' => static::STATE,
+            'state'    => static::STATE,
         ];
         $this->cookie->shouldReceive('getCookie')
             ->once()->andReturn($payload['state']);
@@ -407,6 +466,46 @@ class LtiMessageLaunchTest extends TestCase
         $actual = $this->messageLaunch->validate($payload);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
+    public function testALaunchFailsIfThePayloadIsInvalid()
+    {
+        $payload = $this->payload;
+        unset($payload[LtiConstants::MESSAGE_TYPE]);
+        $params = [
+            'utf8'     => '✓',
+            'id_token' => $this->buildJWT($payload, $this->issuer),
+            'state'    => static::STATE,
+        ];
+
+        $this->cookie->shouldReceive('getCookie')
+            ->once()->andReturn($params['state']);
+        $this->cache->shouldReceive('checkNonceIsValid')
+            ->once()->andReturn(true);
+        $this->database->shouldReceive('findRegistrationByIssuer')
+            ->once()->andReturn($this->registration);
+        $this->registration->shouldReceive('getClientId')
+            ->once()->andReturn($this->issuer['client_id']);
+        $this->registration->shouldReceive('getKeySetUrl')
+            ->once()->andReturn($this->issuer['key_set_url']);
+        $this->serviceConnector->shouldReceive('makeRequest')
+            ->once()->andReturn(Mockery::mock(Response::class));
+        $this->serviceConnector->shouldReceive('getResponseBody')
+            ->once()->andReturn(json_decode(file_get_contents(static::JWKS_FILE), true));
+        $this->database->shouldReceive('findDeployment')
+            ->once()->andReturn(['a deployment']);
+
+        $this->expectException(LtiException::class);
+
+        $this->messageLaunch->validate($params);
+    }
+
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchHasNrps()
     {
         $payload = $this->payload;
@@ -418,6 +517,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchDoesNotHaveNrps()
     {
         $payload = $this->payload;
@@ -429,6 +532,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testGetNrpsForALaunch()
     {
         $payload = $this->payload;
@@ -440,6 +547,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiNamesRolesProvisioningService::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchHasGs()
     {
         $payload = $this->payload;
@@ -451,6 +562,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchDoesNotHaveGs()
     {
         $payload = $this->payload;
@@ -462,6 +577,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testGetGsForALaunch()
     {
         $payload = $this->payload;
@@ -473,6 +592,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiCourseGroupsService::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchHasAgs()
     {
         $payload = $this->payload;
@@ -484,6 +607,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchDoesNotHaveAgs()
     {
         $payload = $this->payload;
@@ -495,6 +622,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testGetAgsForALaunch()
     {
         $payload = $this->payload;
@@ -506,6 +637,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiAssignmentsGradesService::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchIsADeepLink()
     {
         $payload = $this->payload;
@@ -517,10 +652,14 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchIsNotADeepLink()
     {
         $payload = $this->payload;
-        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_SUBMISSIONREVIEW;
+        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_SUBMISSION_REVIEW;
         $launch = $this->fakeLaunch($payload);
 
         $actual = $launch->isDeepLinkLaunch();
@@ -528,6 +667,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testGetDeepLinkForALaunch()
     {
         $payload = $this->payload;
@@ -540,10 +683,14 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertInstanceOf(LtiDeepLink::class, $actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchIsASubmissionReview()
     {
         $payload = $this->payload;
-        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_SUBMISSIONREVIEW;
+        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_SUBMISSION_REVIEW;
         $launch = $this->fakeLaunch($payload);
 
         $actual = $launch->isSubmissionReviewLaunch();
@@ -551,6 +698,10 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchIsNotASubmissionReview()
     {
         $payload = $this->payload;
@@ -562,10 +713,14 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
+    /**
+     * @return void
+     * @throws LtiException
+     */
     public function testALaunchIsAResourceLink()
     {
         $payload = $this->payload;
-        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_RESOURCELINK;
+        $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_RESOURCE_LINK;
         $launch = $this->fakeLaunch($payload);
 
         $actual = $launch->isResourceLaunch();
@@ -573,7 +728,11 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertTrue($actual);
     }
 
-    public function testALaunchIsNotAResource()
+    /**
+     * @return void
+     * @throws LtiException
+     */
+    public function testALaunchIsNotAResourceLink()
     {
         $payload = $this->payload;
         $payload[LtiConstants::MESSAGE_TYPE] = LtiMessageLaunch::TYPE_DEEPLINK;
@@ -584,16 +743,25 @@ class LtiMessageLaunchTest extends TestCase
         $this->assertFalse($actual);
     }
 
-    public function tesGetLaunchDataForALaunch()
+    /**
+     * @return void
+     * @throws LtiException
+     */
+    public function testGetLaunchDataForALaunch()
     {
-        $launch = $this->getLaunchData($this->payload);
+        $launch = $this->fakeLaunch($this->payload);
 
         $actual = $launch->getLaunchData();
 
         $this->assertEquals($this->payload, $actual);
     }
 
-    private function fakeLaunch($payload, $launchId = 'id_token')
+    /**
+     * @param array $payload
+     * @return LtiMessageLaunch
+     * @throws LtiException
+     */
+    private function fakeLaunch(array $payload): LtiMessageLaunch
     {
         $this->cache->shouldReceive('getLaunchData')
             ->once()->andReturn($payload);
@@ -602,14 +770,29 @@ class LtiMessageLaunchTest extends TestCase
         $this->registration->shouldReceive('getClientId')
             ->once()->andReturn($this->issuer['client_id']);
 
-        return $this->messageLaunch::fromCache($launchId, $this->database, $this->cache, $this->serviceConnector);
+        return $this->messageLaunch::fromCache(
+            'id_token',
+            $this->database,
+            $this->cache,
+            $this->cookie,
+            $this->serviceConnector
+        );
     }
 
-    private function buildJWT($data, $header)
+    /**
+     * @param array $data
+     * @param       $header
+     * @return string
+     */
+    private function buildJWT(array $data, $header = null): string
     {
-        $jwks = json_encode(JwksEndpoint::new([
-            $this->issuer['kid'] => $this->issuer['tool_private_key'],
-        ])->getPublicJwks());
+        $jwks = json_encode(
+            JwksEndpoint::new(
+                [
+                    $this->issuer['kid'] => $this->issuer['tool_private_key'],
+                ]
+            )->getPublicJwks()
+        );
         file_put_contents(static::JWKS_FILE, $jwks);
 
         // If we pass in a header, use that instead of creating one automatically based on params given
@@ -617,14 +800,14 @@ class LtiMessageLaunchTest extends TestCase
             $segments = [];
             $segments[] = JWT::urlsafeB64Encode(JWT::jsonEncode($header));
             $segments[] = JWT::urlsafeB64Encode(JWT::jsonEncode($data));
-            $signing_input = \implode('.', $segments);
+            $signing_input = implode('.', $segments);
 
             $signature = JWT::sign($signing_input, $this->issuer['tool_private_key'], $this->issuer['alg']);
             $segments[] = JWT::urlsafeB64Encode($signature);
 
-            return \implode('.', $segments);
+            return implode('.', $segments);
         }
 
-        return JWT::encode($data, $this->issuer['tool_private_key'], $alg, $this->issuer['kid']);
+        return JWT::encode($data, $this->issuer['tool_private_key'], $this->issuer['alg'], $this->issuer['kid']);
     }
 }

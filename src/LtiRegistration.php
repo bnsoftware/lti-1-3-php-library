@@ -6,15 +6,18 @@ use BNSoftware\Lti1p3\Interfaces\ILtiRegistration;
 
 class LtiRegistration implements ILtiRegistration
 {
-    private $issuer;
-    private $clientId;
-    private $keySetUrl;
-    private $authTokenUrl;
-    private $authLoginUrl;
-    private $authServer;
-    private $toolPrivateKey;
-    private $kid;
+    private ?string $issuer;
+    private ?string $clientId;
+    private ?string $keySetUrl;
+    private ?string $authTokenUrl;
+    private ?string $authLoginUrl;
+    private ?string $authServer;
+    private ?string $toolPrivateKey;
+    private ?string $kid;
 
+    /**
+     * @param array $registration
+     */
     public function __construct(array $registration = [])
     {
         $this->issuer = $registration['issuer'] ?? null;
@@ -27,104 +30,164 @@ class LtiRegistration implements ILtiRegistration
         $this->kid = $registration['kid'] ?? null;
     }
 
-    public static function new(array $registration = [])
+    /**
+     * @param array $registration
+     * @return LtiRegistration
+     */
+    public static function new(array $registration = []): LtiRegistration
     {
         return new LtiRegistration($registration);
     }
 
-    public function getIssuer()
-    {
-        return $this->issuer;
-    }
-
-    public function setIssuer($issuer)
+    /**
+     * @param ?string $issuer
+     * @return $this
+     */
+    public function setIssuer(?string $issuer): LtiRegistration
     {
         $this->issuer = $issuer;
 
         return $this;
     }
 
-    public function getClientId()
+    /**
+     * @return ?string
+     */
+    public function getIssuer(): ?string
     {
-        return $this->clientId;
+        return $this->issuer;
     }
 
-    public function setClientId($clientId)
+    /**
+     * @param ?string $clientId
+     * @return $this
+     */
+    public function setClientId(?string $clientId): LtiRegistration
     {
         $this->clientId = $clientId;
 
         return $this;
     }
 
-    public function getKeySetUrl()
+    /**
+     * @return ?string
+     */
+    public function getClientId(): ?string
     {
-        return $this->keySetUrl;
+        return $this->clientId;
     }
 
-    public function setKeySetUrl($keySetUrl)
+    /**
+     * @param ?string $keySetUrl
+     * @return $this
+     */
+    public function setKeySetUrl(?string $keySetUrl): LtiRegistration
     {
         $this->keySetUrl = $keySetUrl;
 
         return $this;
     }
 
-    public function getAuthTokenUrl()
+    /**
+     * @return ?string
+     */
+    public function getKeySetUrl(): ?string
     {
-        return $this->authTokenUrl;
+        return $this->keySetUrl;
     }
 
-    public function setAuthTokenUrl($authTokenUrl)
+    /**
+     * @param ?string $authTokenUrl
+     * @return $this
+     */
+    public function setAuthTokenUrl(?string $authTokenUrl): LtiRegistration
     {
         $this->authTokenUrl = $authTokenUrl;
 
         return $this;
     }
 
-    public function getAuthLoginUrl()
+    /**
+     * @return ?string
+     */
+    public function getAuthTokenUrl(): ?string
     {
-        return $this->authLoginUrl;
+        return $this->authTokenUrl;
     }
 
-    public function setAuthLoginUrl($authLoginUrl)
+    /**
+     * @param ?string $authLoginUrl
+     * @return $this
+     */
+    public function setAuthLoginUrl(?string $authLoginUrl): LtiRegistration
     {
         $this->authLoginUrl = $authLoginUrl;
 
         return $this;
     }
 
-    public function getAuthServer()
+    /**
+     * @return ?string
+     */
+    public function getAuthLoginUrl(): ?string
     {
-        return empty($this->authServer) ? $this->authTokenUrl : $this->authServer;
+        return $this->authLoginUrl;
     }
 
-    public function setAuthServer($authServer)
+    /**
+     * @param ?string $authServer
+     * @return $this
+     */
+    public function setAuthServer(?string $authServer): LtiRegistration
     {
         $this->authServer = $authServer;
 
         return $this;
     }
 
-    public function getToolPrivateKey()
+    /**
+     * @return ?string
+     */
+    public function getAuthServer(): ?string
     {
-        return $this->toolPrivateKey;
+        return empty($this->authServer) ? $this->authTokenUrl : $this->authServer;
     }
 
-    public function setToolPrivateKey($toolPrivateKey)
+    /**
+     * @param ?string $toolPrivateKey
+     * @return $this
+     */
+    public function setToolPrivateKey(?string $toolPrivateKey): LtiRegistration
     {
         $this->toolPrivateKey = $toolPrivateKey;
 
         return $this;
     }
 
-    public function getKid()
+    /**
+     * @return ?string
+     */
+    public function getToolPrivateKey(): ?string
     {
-        return $this->kid ?? hash('sha256', trim($this->issuer.$this->clientId));
+        return $this->toolPrivateKey;
     }
 
-    public function setKid($kid)
+    /**
+     * @param ?string $kid
+     * @return $this
+     */
+    public function setKid(?string $kid): LtiRegistration
     {
         $this->kid = $kid;
 
         return $this;
+    }
+
+    /**
+     * @return ?string
+     */
+    public function getKid(): ?string
+    {
+        return $this->kid ?? hash('sha256', trim($this->issuer . $this->clientId));
     }
 }
