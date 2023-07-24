@@ -3,6 +3,7 @@
 namespace BNSoftware\Lti1p3;
 
 use BNSoftware\Lti1p3\Interfaces\IServiceRequest;
+use Throwable;
 
 class ServiceRequest implements IServiceRequest
 {
@@ -118,9 +119,13 @@ class ServiceRequest implements IServiceRequest
             'headers' => $this->getHeaders(),
         ];
 
-        $body = $this->getBody();
-        if ($body) {
-            $payload['body'] = $body;
+        try {
+            $body = $this->getBody();
+            if ($body) {
+                $payload['body'] = $body;
+            }
+        } catch (Throwable $e) {
+            // Do nothing
         }
 
         return $payload;
