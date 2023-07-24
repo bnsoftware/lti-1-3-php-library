@@ -3,6 +3,7 @@
 namespace BNSoftware\Lti1p3;
 
 use BNSoftware\Lti1p3\Interfaces\IServiceRequest;
+use Throwable;
 
 class ServiceRequest implements IServiceRequest
 {
@@ -38,7 +39,7 @@ class ServiceRequest implements IServiceRequest
     private $contentType = 'application/json';
     private $accept = 'application/json';
 
-    public function __construct(string $method, string $url, $type = self::UNSUPPORTED)
+    public function __construct(string $method, string $url, $type = self::TYPE_UNSUPPORTED)
     {
         $this->method = $method;
         $this->url = $url;
@@ -65,9 +66,13 @@ class ServiceRequest implements IServiceRequest
             'headers' => $this->getHeaders(),
         ];
 
-        $body = $this->getBody();
-        if ($body) {
-            $payload['body'] = $body;
+        try {
+            $body = $this->getBody();
+            if ($body) {
+                $payload['body'] = $body;
+            }
+        } catch (Throwable $e) {
+            // Do nothing
         }
 
         return $payload;
