@@ -42,7 +42,7 @@ class ServiceRequest implements IServiceRequest
     private array $payload;
     private ?string $accessToken;
     private string $contentType = 'application/json';
-    private $accept = 'application/json';
+    private string $accept = 'application/json';
 
     /**
      * @param string $method
@@ -132,7 +132,7 @@ class ServiceRequest implements IServiceRequest
      */
     public function setAccessToken(string $accessToken): IServiceRequest
     {
-        $this->accessToken = 'Bearer '.$accessToken;
+        $this->accessToken = 'Bearer ' . $accessToken;
 
         return $this;
     }
