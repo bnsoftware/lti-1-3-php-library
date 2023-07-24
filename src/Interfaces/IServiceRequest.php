@@ -2,6 +2,7 @@
 
 namespace BNSoftware\Lti1p3\Interfaces;
 
+/** @internal */
 interface IServiceRequest
 {
     public function getMethod(): string;

@@ -3,6 +3,7 @@
 namespace Tests;
 
 use BNSoftware\Lti1p3\LtiGrade;
+use BNSoftware\Lti1p3\LtiTimestamp;
 
 class LtiGradeTest extends TestCase
 {
@@ -25,7 +26,7 @@ class LtiGradeTest extends TestCase
 
     public function testItGetsScoreGiven()
     {
-        $expected = 'expected';
+        $expected = 50;
         $grade = new LtiGrade(['scoreGiven' => $expected]);
 
         $result = $grade->getScoreGiven();
@@ -35,7 +36,7 @@ class LtiGradeTest extends TestCase
 
     public function testItSetsScoreGiven()
     {
-        $expected = 'expected';
+        $expected = 50;
 
         $this->grade->setScoreGiven($expected);
 
@@ -44,7 +45,7 @@ class LtiGradeTest extends TestCase
 
     public function testItGetsScoreMaximum()
     {
-        $expected = 'expected';
+        $expected = 100;
         $grade = new LtiGrade(['scoreMaximum' => $expected]);
 
         $result = $grade->getScoreMaximum();
@@ -54,7 +55,7 @@ class LtiGradeTest extends TestCase
 
     public function testItSetsScoreMaximum()
     {
-        $expected = 'expected';
+        $expected = 100;
 
         $this->grade->setScoreMaximum($expected);
 
@@ -120,7 +121,7 @@ class LtiGradeTest extends TestCase
 
     public function testItGetsTimestamp()
     {
-        $expected = 'expected';
+        $expected = LtiTimestamp::new('2023-01-01T00:00:00Z');
         $grade = new LtiGrade(['timestamp' => $expected]);
 
         $result = $grade->getTimestamp();
@@ -130,7 +131,7 @@ class LtiGradeTest extends TestCase
 
     public function testItSetsTimestamp()
     {
-        $expected = 'expected';
+        $expected = LtiTimestamp::new('2023-01-01T00:00:00Z');
 
         $this->grade->setTimestamp($expected);
 
@@ -177,7 +178,7 @@ class LtiGradeTest extends TestCase
 
     public function testItGetsCanvasExtension()
     {
-        $expected = 'expected';
+        $expected = ['expected'];
         $grade = new LtiGrade(['https://canvas.instructure.com/lti/submission' => $expected]);
 
         $result = $grade->getCanvasExtension();
@@ -187,7 +188,7 @@ class LtiGradeTest extends TestCase
 
     public function testItSetsCanvasExtension()
     {
-        $expected = 'expected';
+        $expected = ['expected'];
 
         $this->grade->setCanvasExtension($expected);
 
@@ -202,10 +203,10 @@ class LtiGradeTest extends TestCase
             'comment' => 'Comment',
             'activityProgress' => 'ActivityProgress',
             'gradingProgress' => 'GradingProgress',
-            'timestamp' => 'Timestamp',
+            'timestamp' => LtiTimestamp::new('2023-01-01T00:00:00Z')->format(),
             'userId' => 'UserId',
             'submissionReview' => 'SubmissionReview',
-            'https://canvas.instructure.com/lti/submission' => 'CanvasExtension',
+            'https://canvas.instructure.com/lti/submission' => ['CanvasExtension'],
         ];
 
         $grade = new LtiGrade($expected);
@@ -221,10 +222,10 @@ class LtiGradeTest extends TestCase
             'comment' => 'Comment',
             'activityProgress' => 'ActivityProgress',
             'gradingProgress' => 'GradingProgress',
-            'timestamp' => 'Timestamp',
+            'timestamp' => LtiTimestamp::new('2023-01-01T00:00:00Z')->format(),
             'userId' => 'UserId',
             'submissionReview' => 'SubmissionReview',
-            'https://canvas.instructure.com/lti/submission' => 'CanvasExtension',
+            'https://canvas.instructure.com/lti/submission' => ['CanvasExtension'],
         ];
 
         $grade = new LtiGrade($expected);

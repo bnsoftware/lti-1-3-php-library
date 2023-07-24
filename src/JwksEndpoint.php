@@ -2,64 +2,72 @@
 
 namespace BNSoftware\Lti1p3;
 
-use Firebase\JWT\JWT;
 use BNSoftware\Lti1p3\Interfaces\IDatabase;
 use BNSoftware\Lti1p3\Interfaces\ILtiRegistration;
-use phpseclib\Crypt\RSA;
+use phpseclib3\Crypt\RSA;
 
 class JwksEndpoint
 {
-    private $keys;
+    private array $keys;
 
+    /**
+     * @param array $keys
+     */
     public function __construct(array $keys)
     {
         $this->keys = $keys;
     }
 
-    public static function new(array $keys)
+    /**
+     * @param array $keys
+     * @return JwksEndpoint
+     */
+    public static function new(array $keys): JwksEndpoint
     {
         return new JwksEndpoint($keys);
     }
 
-    public static function fromIssuer(IDatabase $database, $issuer)
+    /**
+     * @param IDatabase $database
+     * @param string    $issuer
+     * @return JwksEndpoint
+     */
+    public static function fromIssuer(IDatabase $database, string $issuer): JwksEndpoint
     {
         $registration = $database->findRegistrationByIssuer($issuer);
 
         return new JwksEndpoint([$registration->getKid() => $registration->getToolPrivateKey()]);
     }
 
-    public static function fromRegistration(ILtiRegistration $registration)
+    /**
+     * @param ILtiRegistration $registration
+     * @return JwksEndpoint
+     */
+    public static function fromRegistration(ILtiRegistration $registration): JwksEndpoint
     {
         return new JwksEndpoint([$registration->getKid() => $registration->getToolPrivateKey()]);
     }
 
-    public function getPublicJwks()
+    /**
+     * @return array[]
+     */
+    public function getPublicJwks(): array
     {
         $jwks = [];
-        foreach ($this->keys as $kid => $private_key) {
-            $key = new RSA();
-            $key->setHash('sha256');
-            $key->loadKey($private_key);
-            $key->setPublicKey(false, RSA::PUBLIC_FORMAT_PKCS8);
-            if (!$key->publicExponent) {
-                continue;
-            }
-            $components = [
-                'kty' => 'RSA',
-                'alg' => 'RS256',
-                'use' => 'sig',
-                'e' => JWT::urlsafeB64Encode($key->publicExponent->toBytes()),
-                'n' => JWT::urlsafeB64Encode($key->modulus->toBytes()),
-                'kid' => $kid,
-            ];
-            $jwks[] = $components;
+        foreach ($this->keys as $kid => $privateKey) {
+            $key = RSA::load($privateKey);
+            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
+            $jwk = json_decode($key->getPublicKey()->toString('JWK'), true);
+            $jwks[] = array_merge(
+                $jwk['keys'][0],
+                [
+                    'alg' => 'RS256',
+                    'use' => 'sig',
+                    'kid' => $kid,
+                ]
+            );
         }
 
         return ['keys' => $jwks];
-    }
-
-    public function outputJwks()
-    {
-        echo json_encode($this->getPublicJwks());
     }
 }

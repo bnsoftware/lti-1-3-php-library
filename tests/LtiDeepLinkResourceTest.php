@@ -2,16 +2,23 @@
 
 namespace Tests;
 
-use Mockery;
+use BNSoftware\Lti1p3\LtiConstants;
+use BNSoftware\Lti1p3\LtiDeepLinkDateTimeInterval;
 use BNSoftware\Lti1p3\LtiDeepLinkResource;
 use BNSoftware\Lti1p3\LtiDeepLinkResourceIcon;
-use BNSoftware\Lti1p3\LtiLineitem;
+use BNSoftware\Lti1p3\LtiDeepLinkResourceIframe;
+use BNSoftware\Lti1p3\LtiDeepLinkResourceThumbnail;
+use BNSoftware\Lti1p3\LtiDeepLinkResourceWindow;
+use BNSoftware\Lti1p3\LtiException;
+use BNSoftware\Lti1p3\LtiLineItem;
+use Mockery;
 
 class LtiDeepLinkResourceTest extends TestCase
 {
+    private LtiDeepLinkResource $deepLinkResource;
+
     public function setUp(): void
     {
-        $this->imageUrl = 'https://example.com/image.png';
         $this->deepLinkResource = new LtiDeepLinkResource();
     }
 
@@ -38,8 +45,9 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = 'expected';
 
-        $this->deepLinkResource->setType($expected);
+        $result = $this->deepLinkResource->setType($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getType());
     }
 
@@ -54,8 +62,9 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = 'expected';
 
-        $this->deepLinkResource->setTitle($expected);
+        $result = $this->deepLinkResource->setTitle($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getTitle());
     }
 
@@ -70,8 +79,9 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = 'expected';
 
-        $this->deepLinkResource->setText($expected);
+        $result = $this->deepLinkResource->setText($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getText());
     }
 
@@ -86,24 +96,26 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = 'expected';
 
-        $this->deepLinkResource->setUrl($expected);
+        $result = $this->deepLinkResource->setUrl($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getUrl());
     }
 
-    public function testItGetsLineitem()
+    public function testItGetsLineItem()
     {
         $result = $this->deepLinkResource->getLineItem();
 
         $this->assertNull($result);
     }
 
-    public function testItSetsLineitem()
+    public function testItSetsLineItem()
     {
-        $expected = Mockery::mock(LtiLineitem::class);
+        $expected = Mockery::mock(LtiLineItem::class);
 
-        $this->deepLinkResource->setLineItem($expected);
+        $result = $this->deepLinkResource->setLineItem($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getLineItem());
     }
 
@@ -118,8 +130,9 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = Mockery::mock(LtiDeepLinkResourceIcon::class);
 
-        $this->deepLinkResource->setIcon($expected);
+        $result = $this->deepLinkResource->setIcon($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getIcon());
     }
 
@@ -132,10 +145,11 @@ class LtiDeepLinkResourceTest extends TestCase
 
     public function testItSetsThumbnail()
     {
-        $expected = Mockery::mock(LtiDeepLinkResourceIcon::class);
+        $expected = Mockery::mock(LtiDeepLinkResourceThumbnail::class);
 
-        $this->deepLinkResource->setThumbnail($expected);
+        $result = $this->deepLinkResource->setThumbnail($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getThumbnail());
     }
 
@@ -150,8 +164,9 @@ class LtiDeepLinkResourceTest extends TestCase
     {
         $expected = ['a_key' => 'a_value'];
 
-        $this->deepLinkResource->setCustomParams($expected);
+        $result = $this->deepLinkResource->setCustomParams($expected);
 
+        $this->assertSame($this->deepLinkResource, $result);
         $this->assertEquals($expected, $this->deepLinkResource->getCustomParams());
     }
 
@@ -171,46 +186,98 @@ class LtiDeepLinkResourceTest extends TestCase
         $this->assertEquals($expected, $this->deepLinkResource->getTarget());
     }
 
-    public function testItCastsToArray()
+    /**
+     * @return void
+     */
+    public function testItGetsIframe()
     {
-        $icon = LtiDeepLinkResourceIcon::new($this->imageUrl, 100, 200);
+        $result = $this->deepLinkResource->getIframe();
 
+        $this->assertEquals(null, $result);
+    }
+
+    /**
+     * @return void
+     */
+    public function testItSetsIframe()
+    {
+        $expected = new LtiDeepLinkResourceIframe();
+
+        $result = $this->deepLinkResource->setIframe($expected);
+
+        $this->assertSame($this->deepLinkResource, $result);
+        $this->assertEquals($expected, $this->deepLinkResource->getIframe());
+    }
+
+    /**
+     * @return void
+     * @throws LtiException
+     */
+    public function testItCreatesArrayWithoutOptionalProperties()
+    {
         $expected = [
-            'type' => 'ltiResourceLink',
-            'title' => 'a_title',
-            'text' => 'a_text',
-            'url' => 'a_url',
-            'icon' => [
-                'url' => $icon->getUrl(),
-                'width' => $icon->getWidth(),
-                'height' => $icon->getHeight(),
-            ],
-            'thumbnail' => [
-                'url' => $icon->getUrl(),
-                'width' => $icon->getWidth(),
-                'height' => $icon->getHeight(),
-            ],
+            'type'         => LtiConstants::DL_RESOURCE_LINK_TYPE,
             'presentation' => [
-                'documentTarget' => 'iframe',
-            ],
-            'lineItem' => [
-                'scoreMaximum' => 80,
-                'label' => 'lineitem_label',
+                'documentTarget' => $this->deepLinkResource->getTarget(),
             ],
         ];
 
-        $lineitem = Mockery::mock(LtiLineitem::class);
-        $lineitem->shouldReceive('getScoreMaximum')
-            ->twice()->andReturn($expected['lineItem']['scoreMaximum']);
-        $lineitem->shouldReceive('getLabel')
-            ->twice()->andReturn($expected['lineItem']['label']);
+        $result = $this->deepLinkResource->toArray();
+
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * @return void
+     * @throws LtiException
+     */
+    public function testItCreatesArrayWithDefinedOptionalProperties()
+    {
+        $icon = LtiDeepLinkResourceIcon::new('https://example.com/image.png', 100, 200);
+        $thumbnail = LtiDeepLinkResourceThumbnail::new('https://example.com/image.png', 100, 200);
+        $resourceIframe = new LtiDeepLinkResourceIframe();
+        $resourceWindow = new LtiDeepLinkResourceWindow();
+        $resourceDateTimeInterval = new LtiDeepLinkDateTimeInterval(date_create());
+
+        $expected = [
+            'type'       => LtiConstants::DL_RESOURCE_LINK_TYPE,
+            'title'      => 'a_title',
+            'text'       => 'a_text',
+            'url'        => 'a_url',
+            'icon'       => [
+                'url'    => $icon->getUrl(),
+                'width'  => $icon->getWidth(),
+                'height' => $icon->getHeight(),
+            ],
+            'thumbnail'  => [
+                'url'    => $icon->getUrl(),
+                'width'  => $icon->getWidth(),
+                'height' => $icon->getHeight(),
+            ],
+            'lineItem'   => [
+                'scoreMaximum' => 80,
+                'label'        => 'line_item_label',
+            ],
+            'iframe'     => $resourceIframe->toArray(),
+            'window'     => $resourceWindow->toArray(),
+            'available'  => $resourceDateTimeInterval->toArray(),
+            'submission' => $resourceDateTimeInterval->toArray(),
+        ];
+
+        $lineItem = Mockery::mock(LtiLineItem::class);
+        $lineItem->shouldReceive('toArray')
+            ->twice()->andReturn($expected['lineItem']);
 
         $this->deepLinkResource->setTitle($expected['title']);
         $this->deepLinkResource->setText($expected['text']);
         $this->deepLinkResource->setUrl($expected['url']);
         $this->deepLinkResource->setIcon($icon);
-        $this->deepLinkResource->setThumbnail($icon);
-        $this->deepLinkResource->setLineItem($lineitem);
+        $this->deepLinkResource->setThumbnail($thumbnail);
+        $this->deepLinkResource->setLineItem($lineItem);
+        $this->deepLinkResource->setIframe($resourceIframe);
+        $this->deepLinkResource->setWindow($resourceWindow);
+        $this->deepLinkResource->setAvailabilityInterval($resourceDateTimeInterval);
+        $this->deepLinkResource->setSubmissionInterval($resourceDateTimeInterval);
 
         $result = $this->deepLinkResource->toArray();
 

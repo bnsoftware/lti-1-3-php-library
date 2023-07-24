@@ -5,6 +5,7 @@ namespace BNSoftware\Lti1p3;
 use BNSoftware\Lti1p3\Interfaces\ICache;
 use BNSoftware\Lti1p3\Interfaces\ICookie;
 use BNSoftware\Lti1p3\Interfaces\IDatabase;
+use BNSoftware\Lti1p3\Interfaces\ILtiRegistration;
 use BNSoftware\Lti1p3\Interfaces\ILtiServiceConnector;
 use BNSoftware\Lti1p3\MessageValidators\DeepLinkMessageValidator;
 use BNSoftware\Lti1p3\MessageValidators\ResourceMessageValidator;
@@ -13,16 +14,18 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key as JWTKey;
+use stdClass;
 use Throwable;
 
 class LtiMessageLaunch
 {
     public const TYPE_DEEPLINK = 'LtiDeepLinkingRequest';
-    public const TYPE_SUBMISSIONREVIEW = 'LtiSubmissionReviewRequest';
-    public const TYPE_RESOURCELINK = 'LtiResourceLinkRequest';
+    public const TYPE_SUBMISSION_REVIEW = 'LtiSubmissionReviewRequest';
+    public const TYPE_RESOURCE_LINK = 'LtiResourceLinkRequest';
 
     public const ERR_FETCH_PUBLIC_KEY = 'Failed to fetch public key.';
     public const ERR_NO_PUBLIC_KEY = 'Unable to find public key.';
+    public const ERR_NO_MATCHING_PUBLIC_KEY = 'Unable to find a public key which matches your JWT.';
     public const ERR_STATE_NOT_FOUND = 'Please make sure you have cookies enabled in this browser and that you are not in private or incognito mode';
     public const ERR_MISSING_ID_TOKEN = 'Missing id_token.';
     public const ERR_INVALID_ID_TOKEN = 'Invalid id_token, JWT must contain 3 parts';
@@ -54,7 +57,7 @@ class LtiMessageLaunch
     private ?ILtiServiceConnector $serviceConnector;
     private array $request;
     private array $jwt;
-    private LtiRegistration $registration;
+    private ?ILtiRegistration $registration;
     private string $launchId;
 
     // See https://www.imsglobal.org/spec/security/v1p1#approved-jwt-signing-algorithms.
@@ -282,7 +285,7 @@ class LtiMessageLaunch
      */
     public function isSubmissionReviewLaunch(): bool
     {
-        return $this->jwt['body'][LtiConstants::MESSAGE_TYPE] === static::TYPE_SUBMISSIONREVIEW;
+        return $this->jwt['body'][LtiConstants::MESSAGE_TYPE] === static::TYPE_SUBMISSION_REVIEW;
     }
 
     /**
@@ -292,7 +295,7 @@ class LtiMessageLaunch
      */
     public function isResourceLaunch(): bool
     {
-        return $this->jwt['body'][LtiConstants::MESSAGE_TYPE] === static::TYPE_RESOURCELINK;
+        return $this->jwt['body'][LtiConstants::MESSAGE_TYPE] === static::TYPE_RESOURCE_LINK;
     }
 
     /**
@@ -381,7 +384,7 @@ class LtiMessageLaunch
         }
 
         // Could not find public key with a matching kid and alg.
-        throw new LtiException(static::ERR_NO_PUBLIC_KEY);
+        throw new LtiException(static::ERR_NO_MATCHING_PUBLIC_KEY);
     }
 
     /**
@@ -530,7 +533,8 @@ class LtiMessageLaunch
 
         // Validate JWT signature
         try {
-            JWT::decode($this->request['id_token'], $publicKey, ['RS256']);
+            $headers = new stdClass();
+            JWT::decode($this->request['id_token'], $publicKey, $headers);
         } catch (ExpiredException $e) {
             // Error validating signature.
             throw new LtiException(static::ERR_INVALID_SIGNATURE);
@@ -604,9 +608,7 @@ class LtiMessageLaunch
             throw new LtiException(static::ERR_UNRECOGNIZED_MESSAGE_TYPE);
         }
 
-        if (!$messageValidator->validate($this->jwt['body'])) {
-            throw new LtiException(static::ERR_INVALID_MESSAGE);
-        }
+        $messageValidator->validate($this->jwt['body']);
 
         return $this;
     }

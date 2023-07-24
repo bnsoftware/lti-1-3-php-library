@@ -92,22 +92,43 @@ class LtiGradeSubmissionReviewTest extends TestCase
         $this->assertEquals($expected, $this->gradeReview->getCustom());
     }
 
-    public function testItCastsFullObjectToString()
+    public function testToArrayWithFullObject()
     {
         $expected = [
             'reviewableStatus' => 'ReviewableStatus',
-            'label' => 'Label',
-            'url' => 'Url',
-            'custom' => 'Custom',
+            'label'            => 'Label',
+            'url'              => 'Url',
+            'custom'           => 'Custom',
         ];
 
         $gradeReview = new LtiGradeSubmissionReview($expected);
 
-        $this->assertEquals(json_encode($expected), (string) $gradeReview);
+        $this->assertEquals($expected, $gradeReview->toArray());
+    }
+
+    public function testToArrayWithEmptyObject()
+    {
+        $expected = [];
+
+        $this->assertEquals($expected, $this->gradeReview->toArray());
+    }
+
+    public function testItCastsFullObjectToString()
+    {
+        $expected = [
+            'reviewableStatus' => 'ReviewableStatus',
+            'label'            => 'Label',
+            'url'              => 'Url',
+            'custom'           => 'Custom',
+        ];
+
+        $gradeReview = new LtiGradeSubmissionReview($expected);
+
+        $this->assertEquals(json_encode($expected), (string)$gradeReview);
     }
 
     public function testItCastsEmptyObjectToString()
     {
-        $this->assertEquals('[]', (string) $this->gradeReview);
+        $this->assertEquals('[]', (string)$this->gradeReview);
     }
 }

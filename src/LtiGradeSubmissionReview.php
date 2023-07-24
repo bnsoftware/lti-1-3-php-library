@@ -4,12 +4,15 @@ namespace BNSoftware\Lti1p3;
 
 class LtiGradeSubmissionReview
 {
-    private $reviewableStatus;
-    private $label;
-    private $url;
+    private ?string $reviewableStatus;
+    private ?string $label;
+    private ?string $url;
     private $custom;
 
-    public function __construct(array $gradeSubmission = null)
+    /**
+     * @param ?array $gradeSubmission
+     */
+    public function __construct(?array $gradeSubmission = null)
     {
         $this->reviewableStatus = $gradeSubmission['reviewableStatus'] ?? null;
         $this->label = $gradeSubmission['label'] ?? null;
@@ -17,75 +20,112 @@ class LtiGradeSubmissionReview
         $this->custom = $gradeSubmission['custom'] ?? null;
     }
 
-    public function __toString()
+    /**
+     * @param ?array $gradeSubmission
+     * @return LtiGradeSubmissionReview
+     */
+    public static function new(?array $gradeSubmission = null): LtiGradeSubmissionReview
     {
-        // Additionally, includes the call back to filter out only NULL values
-        return json_encode(
-            array_filter(
-                [
-                    'reviewableStatus' => $this->reviewableStatus,
-                    'label'            => $this->label,
-                    'url'              => $this->url,
-                    'custom'           => $this->custom,
-                ],
-                '\BNSoftware\Lti1p3\Helpers\Helpers::checkIfNullValue'
-            )
-        );
+        return new LtiGradeSubmissionReview($gradeSubmission);
     }
 
     /**
-     * Static function to allow for method chaining without having to assign to a variable first.
+     * @param ?string $status
+     * @return $this
      */
-    public static function new()
+    public function setReviewableStatus(?string $status): LtiGradeSubmissionReview
     {
-        return new LtiGradeSubmissionReview();
+        $this->reviewableStatus = $status;
+
+        return $this;
     }
 
-    public function getReviewableStatus()
+    /**
+     * @return ?string
+     */
+    public function getReviewableStatus(): ?string
     {
         return $this->reviewableStatus;
     }
 
-    public function setReviewableStatus($value)
+    /**
+     * @param ?string $label
+     * @return $this
+     */
+    public function setLabel(?string $label): LtiGradeSubmissionReview
     {
-        $this->reviewableStatus = $value;
+        $this->label = $label;
 
         return $this;
     }
 
-    public function getLabel()
+    /**
+     * @return ?string
+     */
+    public function getLabel(): ?string
     {
         return $this->label;
     }
 
-    public function setLabel($value)
-    {
-        $this->label = $value;
-
-        return $this;
-    }
-
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    public function setUrl($url)
+    /**
+     * @param ?string $url
+     * @return $this
+     */
+    public function setUrl(?string $url): LtiGradeSubmissionReview
     {
         $this->url = $url;
 
         return $this;
     }
 
+    /**
+     * @return ?string
+     */
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    /**
+     * @param $value
+     * @return $this
+     */
+    public function setCustom($value): LtiGradeSubmissionReview
+    {
+        $this->custom = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return ?mixed
+     */
     public function getCustom()
     {
         return $this->custom;
     }
 
-    public function setCustom($value)
-    {
-        $this->custom = $value;
+    /**
+     * @return array
+     */
+    public function toArray(): array {
+        return array_filter(
+            [
+                'reviewableStatus' => $this->reviewableStatus,
+                'label'            => $this->label,
+                'url'              => $this->url,
+                'custom'           => $this->custom,
+            ],
+            '\BNSoftware\Lti1p3\Helpers\Helpers::checkIfNullValue'
+        );
+    }
 
-        return $this;
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        // Additionally, includes the call back to filter out only NULL values
+        return (string)json_encode($this->toArray());
     }
 }

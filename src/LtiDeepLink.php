@@ -4,30 +4,46 @@ namespace BNSoftware\Lti1p3;
 
 use Firebase\JWT\JWT;
 use BNSoftware\Lti1p3\Interfaces\ILtiRegistration;
+use Throwable;
 
 class LtiDeepLink
 {
-    private $registration;
-    private $deployment_id;
-    private $deep_link_settings;
+    private ILtiRegistration $registration;
+    private string $deployment_id;
+    private array $deepLinkSettings;
 
     /**
      * @param ILtiRegistration $registration
      * @param string           $deployment_id
-     * @param array            $deep_link_settings
+     * @param array            $deepLinkSettings
      */
-    public function __construct(ILtiRegistration $registration, string $deployment_id, array $deep_link_settings)
+    public function __construct(ILtiRegistration $registration, string $deployment_id, array $deepLinkSettings)
     {
         $this->registration = $registration;
         $this->deployment_id = $deployment_id;
-        $this->deep_link_settings = $deep_link_settings;
+        $this->deepLinkSettings = $deepLinkSettings;
+    }
+
+    /**
+     * @param ILtiRegistration $registration
+     * @param string           $deployment_id
+     * @param array            $deepLinkSettings
+     * @return LtiDeepLink
+     */
+    public static function new(
+        ILtiRegistration $registration,
+        string $deployment_id,
+        array $deepLinkSettings
+    ): LtiDeepLink {
+        return new LtiDeepLink($registration, $deployment_id, $deepLinkSettings);
     }
 
     /**
      * @param $resources
-     * @return mixed
+     * @return string
+     * @throws Throwable
      */
-    public function getResponseJwt($resources)
+    public function getResponseJwt($resources): string
     {
         $message_jwt = [
             'iss'                          => $this->registration->getClientId(),
@@ -36,7 +52,7 @@ class LtiDeepLink
             'iat'                          => time(),
             'nonce'                        => LtiOidcLogin::secureRandomString('nonce-'),
             LtiConstants::DEPLOYMENT_ID    => $this->deployment_id,
-            LtiConstants::MESSAGE_TYPE     => 'LtiDeepLinkingResponse',
+            LtiConstants::MESSAGE_TYPE     => LtiConstants::MESSAGE_TYPE_DEEP_LINK_RESPONSE,
             LtiConstants::VERSION          => LtiConstants::V1_3,
             LtiConstants::DL_CONTENT_ITEMS => array_map(
                 function ($resource) {
@@ -48,8 +64,8 @@ class LtiDeepLink
 
         // https://www.imsglobal.org/spec/lti-dl/v2p0/#deep-linking-request-message
         // 'data' is an optional property which, if it exists, must be returned by the tool
-        if (isset($this->deep_link_settings['data'])) {
-            $message_jwt[LtiConstants::DL_DATA] = $this->deep_link_settings['data'];
+        if (isset($this->deepLinkSettings['data'])) {
+            $message_jwt[LtiConstants::DL_DATA] = $this->deepLinkSettings['data'];
         }
 
         return JWT::encode(
@@ -61,24 +77,26 @@ class LtiDeepLink
     }
 
     /**
-     * @param $resources
-     * @return void
+     * This method builds an auto-submitting HTML form to post the deep linking response message
+     * back to platform, as per LTI-DL 2.0 specification. The resulting HTML is then written to standard output,
+     * so calling this method will automatically send an HTTP response to conclude the content selection flow.
+     *
+     * @param LtiDeepLinkResource[] $resources The list of selected resources to be sent to the platform
+     * @throws Throwable
+     * @todo Consider wrapping the content inside a well-formed HTML document,
+     *       and returning it instead of directly writing to standard output
      */
-    public function outputResponseForm($resources)
+    public function outputResponseForm(array $resources): void
     {
         $jwt = $this->getResponseJwt($resources);
-        /*
-         * @todo Fix this
-         */ ?>
-        <form id="auto_submit" action="<?php
-        echo $this->deep_link_settings['deep_link_return_url']; ?>" method="POST">
-            <input type="hidden" name="JWT" value="<?php
-            echo $jwt; ?>"/>
-            <input type="submit" name="Go"/>
-        </form>
-        <script>
-            document.getElementById('auto_submit').submit();
-        </script>
-        <?php
+        $formActionUrl = $this->deepLinkSettings['deep_link_return_url'];
+
+        echo <<<HTML
+<form id="auto_submit" action="$formActionUrl" method="POST">
+    <input type="hidden" name="JWT" value="$jwt" />
+    <input type="submit" name="Go" />
+</form>
+<script>document.getElementById('auto_submit').submit();</script>
+HTML;
     }
 }
