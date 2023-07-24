@@ -29,10 +29,10 @@ class JwksEndpoint
 
     /**
      * @param IDatabase $database
-     * @param           $issuer
+     * @param string    $issuer
      * @return JwksEndpoint
      */
-    public static function fromIssuer(IDatabase $database, $issuer): JwksEndpoint
+    public static function fromIssuer(IDatabase $database, string $issuer): JwksEndpoint
     {
         $registration = $database->findRegistrationByIssuer($issuer);
 
