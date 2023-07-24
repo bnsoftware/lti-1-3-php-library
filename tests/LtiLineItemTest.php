@@ -8,6 +8,9 @@ use DateTime;
 
 class LtiLineItemTest extends TestCase
 {
+    /**
+     * @return void
+     */
     public function setUp(): void
     {
         $this->lineItem = new LtiLineItem();

@@ -16,10 +16,6 @@ class LtiLineItem
     private ?LtiTimestamp $endDateTime;
     private ?bool $gradesReleased;
 
-    /**
-     * @param ?array $lineItem
-     * @throws Throwable
-     */
     public function __construct(?array $lineItem = null)
     {
         $this->id = $lineItem['id'] ?? null;
