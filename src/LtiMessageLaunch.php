@@ -612,4 +612,19 @@ class LtiMessageLaunch
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    private function userRoles(): array
+    {
+        return array_unique(
+            array_map(
+                function ($role) {
+                    return substr($role, strrpos($role, '#') + 1);
+                },
+                $this->jwt['body'][LtiConstants::ROLES]
+            )
+        );
+    }
 }
